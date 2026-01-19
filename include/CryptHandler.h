@@ -21,7 +21,9 @@ class CryptHandler
     std::string Encrypt(const std::string& plaintext);
     std::string Decrypt(const std::string& ciphertext);
 
-    static std::array<CryptoPP::byte, KEYLENGTH> KeyFromString(const std::string& string); // TODO: Use PBKDF2
+    void SetKey(std::array<CryptoPP::byte, KEYLENGTH> key);
+
+    static std::array<CryptoPP::byte, KEYLENGTH> KeyFromString(const std::string& string); // Use KDF
 }
 
 #endif
