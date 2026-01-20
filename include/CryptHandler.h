@@ -24,7 +24,7 @@ class CryptHandler
     void SetKey(const std::array<CryptoPP::byte, KEYLENGTH>& key);
 
     static std::array<CryptoPP::byte, KEYLENGTH> KeyFromSecret(const std::string& secret);
-    static std::string BlockToString(const std::array<CryptoPP::byte, KEYLENGTH>& block);
+    static std::string KeyToString(const std::array<CryptoPP::byte, KEYLENGTH>& key);
 };
 
 #endif

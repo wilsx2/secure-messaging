@@ -21,12 +21,16 @@ CryptHandler::CryptHandler(const std::string& secret):
 
 std::string CryptHandler::Encrypt(const std::string& plaintext)
 {
-    byte iv [AES::BLOCKSIZE];
-    memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE); // TODO: Randomly generate IV
-    CBC_Mode_ExternalCipher::Encryption cbcEncryption( _aesEncryption, iv );
-
     std::string ciphertext;
 
+    byte iv [AES::BLOCKSIZE];
+    memset(iv, 0x00, AES::BLOCKSIZE); // TODO: Randomly generate IV
+
+    // Prepend IV
+    ciphertext.append(reinterpret_cast<const char*>(iv), sizeof(iv));
+
+    // Append Body
+    CBC_Mode_ExternalCipher::Encryption cbcEncryption( _aesEncryption, iv );
     StreamTransformationFilter stfEncryptor(cbcEncryption, new CryptoPP::StringSink(ciphertext));
     stfEncryptor.Put(reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.length());
     stfEncryptor.MessageEnd();
@@ -37,15 +41,18 @@ std::string CryptHandler::Encrypt(const std::string& plaintext)
 std::string CryptHandler::Decrypt(const std::string& ciphertext)
 {
     byte iv [AES::BLOCKSIZE];
-    memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE); // TODO: Parse IV from ciphertext
-    CryptoPP::CBC_Mode_ExternalCipher::Decryption cbcDecryption(_aesDecryption, iv);
+    memcpy(iv, ciphertext.data(), AES::BLOCKSIZE);
 
-    std::string decryptedtext;
-    CryptoPP::StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(decryptedtext));
-    stfDecryptor.Put(reinterpret_cast<const unsigned char*>(ciphertext.c_str()), ciphertext.size());
+    std::string decrypted;
+    CBC_Mode_ExternalCipher::Decryption cbcDecryption(_aesDecryption, iv);
+    StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(decrypted));
+    stfDecryptor.Put(
+        reinterpret_cast<const unsigned char*>(ciphertext.data() + AES::BLOCKSIZE),
+        ciphertext.size() - AES::BLOCKSIZE
+    );
     stfDecryptor.MessageEnd();
 
-    return decryptedtext;
+    return decrypted;
 }
 
 const std::array<CryptoPP::byte, CryptHandler::KEYLENGTH>& CryptHandler::GetKey()
@@ -79,13 +86,13 @@ std::array<byte, CryptHandler::KEYLENGTH> CryptHandler::KeyFromSecret(const std:
     return key;
 }
 
-std::string CryptHandler::BlockToString(const std::array<CryptoPP::byte, KEYLENGTH>& block)
+std::string CryptHandler::KeyToString(const std::array<CryptoPP::byte, KEYLENGTH>& key)
 {
     std::string result;
 
     HexEncoder encoder(new StringSink(result));
 
-    encoder.Put(block.data(), block.size());
+    encoder.Put(key.data(), key.size());
     encoder.MessageEnd();
 
     return std::move(result);
