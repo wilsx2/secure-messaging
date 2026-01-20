@@ -6,6 +6,7 @@
 #include <cryptopp/sha.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/hex.h>
+#include <cryptopp/osrng.h>
 
 using namespace CryptoPP;
 
@@ -23,8 +24,10 @@ std::string CryptHandler::Encrypt(const std::string& plaintext)
 {
     std::string ciphertext;
 
+    // Generate IV
+    AutoSeededRandomPool osrng;
     byte iv [AES::BLOCKSIZE];
-    memset(iv, 0x00, AES::BLOCKSIZE); // TODO: Randomly generate IV
+    osrng.GenerateBlock(iv, AES::BLOCKSIZE); // TODO: Randomly generate IV
 
     // Prepend IV
     ciphertext.append(reinterpret_cast<const char*>(iv), sizeof(iv));
