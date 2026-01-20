@@ -12,6 +12,14 @@ CryptHandler::CryptHandler(std::array<byte, KEYLENGTH> key):
     _aesEncryption(_key.data(), KEYLENGTH),
     _aesDecryption(_key.data(), KEYLENGTH)
 {
+    SetKey(key);
+}
+CryptHandler::CryptHandler(const std::string& secret): 
+    CryptHandler(CryptHandler::KeyFromSecret(secret)) 
+{}
+
+void CryptHandler::SetKey(const std::array<CryptoPP::byte, KEYLENGTH>& key)
+{
     memcpy(_key.data(), key.data(), KEYLENGTH);
     _aesEncryption.SetKey(_key.data(), KEYLENGTH);
     _aesDecryption.SetKey(_key.data(), KEYLENGTH);
