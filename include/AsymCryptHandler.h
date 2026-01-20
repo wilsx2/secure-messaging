@@ -20,8 +20,6 @@ class AsymCryptHandler
 
     const CryptoPP::RSA::PublicKey& GetPublicKey();
     const CryptoPP::RSA::PrivateKey& GetPrivateKey();
-
-    // static std::string KeyToString(const std::array<CryptoPP::byte, KEYLENGTH>& key);
 };
 
 #endif

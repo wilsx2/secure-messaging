@@ -41,3 +41,12 @@ std::string AsymCryptHandler::Decrypt(const std::string& ciphertext)
 
     return ciphertext;
 }
+
+const RSA::PublicKey& AsymCryptHandler::GetPublicKey()
+{
+    return _rsa_public_key;
+}
+const RSA::PrivateKey& AsymCryptHandler::GetPrivateKey()
+{
+    return _rsa_private_key;
+}
