@@ -26,3 +26,18 @@ std::string AsymCryptHandler::Encrypt(const std::string& plaintext, const RSA::P
 
     return ciphertext;
 }
+
+std::string AsymCryptHandler::Decrypt(const std::string& ciphertext)
+{
+    std::string plaintext;
+
+    RSAES_OAEP_SHA_Decryptor e(_rsa_private_key);
+
+    StringSource ss1(ciphertext, true,
+        new PK_DecryptorFilter(_rng, e,
+            new StringSink(plaintext)
+        )
+    );
+
+    return ciphertext;
+}
