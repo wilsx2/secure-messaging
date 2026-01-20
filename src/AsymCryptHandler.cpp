@@ -39,7 +39,7 @@ std::string AsymCryptHandler::Decrypt(const std::string& ciphertext)
         )
     );
 
-    return ciphertext;
+    return plaintext;
 }
 
 const RSA::PublicKey& AsymCryptHandler::GetPublicKey()
