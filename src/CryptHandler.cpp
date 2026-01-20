@@ -1,6 +1,7 @@
 #include "CryptHandler.h"
 
 #include <cryptopp/cryptlib.h>
+#include <cryptopp/modes.h>
 #include <cryptopp/hkdf.h>
 #include <cryptopp/sha.h>
 #include <cryptopp/filters.h>
@@ -17,6 +18,35 @@ CryptHandler::CryptHandler(std::array<byte, KEYLENGTH> key):
 CryptHandler::CryptHandler(const std::string& secret): 
     CryptHandler(CryptHandler::KeyFromSecret(secret)) 
 {}
+
+std::string CryptHandler::Encrypt(const std::string& plaintext)
+{
+    byte iv [AES::BLOCKSIZE];
+    memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE); // TODO: Randomly generate IV
+    CBC_Mode_ExternalCipher::Encryption cbcEncryption( _aesEncryption, iv );
+
+    std::string ciphertext;
+
+    StreamTransformationFilter stfEncryptor(cbcEncryption, new CryptoPP::StringSink(ciphertext));
+    stfEncryptor.Put(reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.length());
+    stfEncryptor.MessageEnd();
+    
+    return ciphertext;
+}
+
+std::string CryptHandler::Decrypt(const std::string& ciphertext)
+{
+    byte iv [AES::BLOCKSIZE];
+    memset(iv, 0x00, CryptoPP::AES::BLOCKSIZE); // TODO: Parse IV from ciphertext
+    CryptoPP::CBC_Mode_ExternalCipher::Decryption cbcDecryption(_aesDecryption, iv);
+
+    std::string decryptedtext;
+    CryptoPP::StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(decryptedtext));
+    stfDecryptor.Put(reinterpret_cast<const unsigned char*>(ciphertext.c_str()), ciphertext.size());
+    stfDecryptor.MessageEnd();
+
+    return decryptedtext;
+}
 
 const std::array<CryptoPP::byte, CryptHandler::KEYLENGTH>& CryptHandler::GetKey()
 {

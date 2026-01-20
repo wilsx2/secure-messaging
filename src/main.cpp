@@ -77,13 +77,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Alice's Key: " << CryptHandler::StringFromKey(alice.GetKey()) << std::endl;
     std::cout << "Bob's Key:   " << CryptHandler::StringFromKey(bob.GetKey()) << std::endl;
 
-    // std::string original = "You're good.";
-    // std::string cipher = alice.Encrypt(original);
-    // std::string deciphered = bob.Decrypt(cipher);
+    std::string original = "You're good.";
+    std::string cipher = alice.Encrypt(original);
+    std::string deciphered = bob.Decrypt(cipher);
 
-    // std::cout << "Unencrypted: " << original << std::endl;
-    // std::cout << "Encrypted:   " << cipher << std::endl;
-    // std::cout << "Decrypted:   " << deciphered << std::endl;
+    std::cout << "Unencrypted: " << original << std::endl;
+    std::cout << "Encrypted:   " << cipher << std::endl;
+    std::cout << "Decrypted:   " << deciphered << std::endl;
 
     return 0;
 }
