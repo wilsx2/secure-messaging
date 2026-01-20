@@ -48,3 +48,15 @@ std::array<byte, CryptHandler::KEYLENGTH> CryptHandler::KeyFromSecret(const std:
 
     return key;
 }
+
+std::string CryptHandler::StringFromKey(const std::array<CryptoPP::byte, KEYLENGTH>& key)
+{
+    std::string result;
+
+    HexEncoder encoder(new StringSink(result));
+
+    encoder.Put(key.data(), key.size());
+    encoder.MessageEnd();
+
+    return std::move(result);
+}
