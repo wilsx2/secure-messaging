@@ -74,8 +74,8 @@ int main(int argc, char* argv[]) {
     CryptHandler alice (sharedKey);
     CryptHandler bob ("Love and Peace");
 
-    std::cout << "Alice's Key: " << CryptHandler::StringFromKey(alice.GetKey()) << std::endl;
-    std::cout << "Bob's Key:   " << CryptHandler::StringFromKey(bob.GetKey()) << std::endl;
+    std::cout << "Alice's Key: " << CryptHandler::BlockToString(alice.GetKey()) << std::endl;
+    std::cout << "Bob's Key:   " << CryptHandler::BlockToString(bob.GetKey()) << std::endl;
 
     std::string original = "You're good.";
     std::string cipher = alice.Encrypt(original);
