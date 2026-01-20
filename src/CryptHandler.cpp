@@ -1,11 +1,37 @@
 #include "CryptHandler.h"
 
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/hkdf.h>
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
 
-CryptHandler::CryptHandler(std::array<CryptoPP::byte, KEYLENGTH> key):
+using namespace CryptoPP;
+
+CryptHandler::CryptHandler(std::array<byte, KEYLENGTH> key):
     _aesEncryption(_key.data(), KEYLENGTH),
     _aesDecryption(_key.data(), KEYLENGTH)
 {
     memcpy(_key.data(), key.data(), KEYLENGTH);
     _aesEncryption.SetKey(_key.data(), KEYLENGTH);
     _aesDecryption.SetKey(_key.data(), KEYLENGTH);
+}
+
+std::array<byte, CryptHandler::KEYLENGTH> CryptHandler::KeyFromSecret(const std::string& secret)
+{
+    static HKDF<SHA1> hkdf;
+    static byte info[] = "secure messaging";
+    static size_t ilen = strlen((const char*)info);
+    static byte salt[] = "salt";
+    static size_t slen = strlen((const char*)salt);
+
+    std::array<byte, KEYLENGTH> key;
+    hkdf.DeriveKey(
+        key.data(), key.size(), 
+        reinterpret_cast<const byte*>(secret.data()), strlen(secret.data()), 
+        salt, slen, 
+        info, ilen
+    );
+
+    return key;
 }

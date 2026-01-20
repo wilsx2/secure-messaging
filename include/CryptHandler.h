@@ -1,9 +1,7 @@
 #ifndef CRYPT_H
 #define CRYPT_H
 
-#include <cryptopp/modes.h>
 #include <cryptopp/aes.h>
-#include <cryptopp/filters.h>
 #include <array>
 
 // TODO: Generics for keylength
@@ -23,7 +21,7 @@ class CryptHandler
 
     void SetKey(std::array<CryptoPP::byte, KEYLENGTH> key);
 
-    static std::array<CryptoPP::byte, KEYLENGTH> KeyFromString(const std::string& string); // Use KDF
-}
+    static std::array<CryptoPP::byte, KEYLENGTH> KeyFromSecret(const std::string& secret);
+};
 
 #endif
