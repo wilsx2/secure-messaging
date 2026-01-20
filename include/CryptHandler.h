@@ -15,11 +15,13 @@ class CryptHandler
 
     public:
     CryptHandler(std::array<CryptoPP::byte, KEYLENGTH> key);
+    CryptHandler(const std::string& secret);
 
     std::string Encrypt(const std::string& plaintext);
     std::string Decrypt(const std::string& ciphertext);
 
-    void SetKey(std::array<CryptoPP::byte, KEYLENGTH> key);
+    const std::array<CryptoPP::byte, KEYLENGTH>& GetKey();
+    void SetKey(const std::array<CryptoPP::byte, KEYLENGTH>& key);
 
     static std::array<CryptoPP::byte, KEYLENGTH> KeyFromSecret(const std::string& secret);
 };

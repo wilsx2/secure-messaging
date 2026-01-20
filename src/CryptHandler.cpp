@@ -18,6 +18,11 @@ CryptHandler::CryptHandler(const std::string& secret):
     CryptHandler(CryptHandler::KeyFromSecret(secret)) 
 {}
 
+const std::array<CryptoPP::byte, CryptHandler::KEYLENGTH>& CryptHandler::GetKey()
+{
+    return _key;
+}
+
 void CryptHandler::SetKey(const std::array<CryptoPP::byte, KEYLENGTH>& key)
 {
     memcpy(_key.data(), key.data(), KEYLENGTH);
