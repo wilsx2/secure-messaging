@@ -1,5 +1,5 @@
 #include <iostream>
-#include "CryptHandler.h"
+#include "SymCryptHandler.h"
 
 int main(int argc, char* argv[]) {
     auto sharedKey = SymCryptHandler::KeyFromSecret("Love and Peace");

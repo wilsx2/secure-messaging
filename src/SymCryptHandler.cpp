@@ -1,4 +1,4 @@
-#include "CryptHandler.h"
+#include "SymCryptHandler.h"
 
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/modes.h>
@@ -9,6 +9,15 @@
 #include <cryptopp/osrng.h>
 
 using namespace CryptoPP;
+
+SymCryptHandler::SymCryptHandler():
+    _aesEncryption(_key.data(), KEYLENGTH),
+    _aesDecryption(_key.data(), KEYLENGTH)
+{
+    std::array<byte, KEYLENGTH>  key;
+    memcpy(key.data(), 0x00, KEYLENGTH);
+    SetKey(key);
+}
 
 SymCryptHandler::SymCryptHandler(std::array<byte, KEYLENGTH> key):
     _aesEncryption(_key.data(), KEYLENGTH),
