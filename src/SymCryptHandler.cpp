@@ -10,17 +10,17 @@
 
 using namespace CryptoPP;
 
-CryptHandler::CryptHandler(std::array<byte, KEYLENGTH> key):
+SymCryptHandler::SymCryptHandler(std::array<byte, KEYLENGTH> key):
     _aesEncryption(_key.data(), KEYLENGTH),
     _aesDecryption(_key.data(), KEYLENGTH)
 {
     SetKey(key);
 }
-CryptHandler::CryptHandler(const std::string& secret): 
-    CryptHandler(CryptHandler::KeyFromSecret(secret)) 
+SymCryptHandler::SymCryptHandler(const std::string& secret): 
+    SymCryptHandler(SymCryptHandler::KeyFromSecret(secret)) 
 {}
 
-std::string CryptHandler::Encrypt(const std::string& plaintext)
+std::string SymCryptHandler::Encrypt(const std::string& plaintext)
 {
     std::string ciphertext;
 
@@ -34,14 +34,14 @@ std::string CryptHandler::Encrypt(const std::string& plaintext)
 
     // Append Body
     CBC_Mode_ExternalCipher::Encryption cbcEncryption( _aesEncryption, iv );
-    StreamTransformationFilter stfEncryptor(cbcEncryption, new CryptoPP::StringSink(ciphertext));
+    StreamTransformationFilter stfEncryptor(cbcEncryption, new StringSink(ciphertext));
     stfEncryptor.Put(reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.length());
     stfEncryptor.MessageEnd();
     
     return ciphertext;
 }
 
-std::string CryptHandler::Decrypt(const std::string& ciphertext)
+std::string SymCryptHandler::Decrypt(const std::string& ciphertext)
 {
     byte iv [AES::BLOCKSIZE];
     memcpy(iv, ciphertext.data(), AES::BLOCKSIZE);
@@ -58,19 +58,19 @@ std::string CryptHandler::Decrypt(const std::string& ciphertext)
     return decrypted;
 }
 
-const std::array<CryptoPP::byte, CryptHandler::KEYLENGTH>& CryptHandler::GetKey()
+const std::array<CryptoPP::byte, SymCryptHandler::KEYLENGTH>& SymCryptHandler::GetKey()
 {
     return _key;
 }
 
-void CryptHandler::SetKey(const std::array<CryptoPP::byte, KEYLENGTH>& key)
+void SymCryptHandler::SetKey(const std::array<byte, KEYLENGTH>& key)
 {
     memcpy(_key.data(), key.data(), KEYLENGTH);
     _aesEncryption.SetKey(_key.data(), KEYLENGTH);
     _aesDecryption.SetKey(_key.data(), KEYLENGTH);
 }
 
-std::array<byte, CryptHandler::KEYLENGTH> CryptHandler::KeyFromSecret(const std::string& secret)
+std::array<byte, SymCryptHandler::KEYLENGTH> SymCryptHandler::KeyFromSecret(const std::string& secret)
 {
     static HKDF<SHA1> hkdf;
     static byte info[] = "secure messaging";
@@ -89,7 +89,7 @@ std::array<byte, CryptHandler::KEYLENGTH> CryptHandler::KeyFromSecret(const std:
     return key;
 }
 
-std::string CryptHandler::KeyToString(const std::array<CryptoPP::byte, KEYLENGTH>& key)
+std::string SymCryptHandler::KeyToString(const std::array<byte, KEYLENGTH>& key)
 {
     std::string result;
 

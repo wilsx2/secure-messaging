@@ -1,11 +1,11 @@
-#ifndef CRYPT_H
-#define CRYPT_H
+#ifndef S_CRYPT_H
+#define S_CRYPT_H
 
 #include <cryptopp/aes.h>
 #include <array>
 
 // TODO: Generics for keylength
-class CryptHandler
+class SymCryptHandler
 {
     private:
     static constexpr std::size_t KEYLENGTH = CryptoPP::AES::DEFAULT_KEYLENGTH;
@@ -14,8 +14,9 @@ class CryptHandler
     CryptoPP::AES::Decryption _aesDecryption;
 
     public:
-    CryptHandler(std::array<CryptoPP::byte, KEYLENGTH> key);
-    CryptHandler(const std::string& secret);
+    SymCryptHandler();
+    SymCryptHandler(std::array<CryptoPP::byte, KEYLENGTH> key);
+    SymCryptHandler(const std::string& secret);
 
     std::string Encrypt(const std::string& plaintext);
     std::string Decrypt(const std::string& ciphertext);

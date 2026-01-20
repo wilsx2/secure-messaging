@@ -2,18 +2,18 @@
 #include "CryptHandler.h"
 
 int main(int argc, char* argv[]) {
-    auto sharedKey = CryptHandler::KeyFromSecret("Love and Peace");
+    auto sharedKey = SymCryptHandler::KeyFromSecret("Love and Peace");
     std::cout << "Shared Private Key: ";
     for (auto bte : sharedKey)
     {
         std::cout << bte;
     }
     std::cout << std::endl;
-    CryptHandler alice (sharedKey);
-    CryptHandler bob ("Love and Peace");
+    SymCryptHandler alice (sharedKey);
+    SymCryptHandler bob ("Love and Peace");
 
-    std::cout << "Alice's Key: " << CryptHandler::KeyToString(alice.GetKey()) << std::endl;
-    std::cout << "Bob's Key:   " << CryptHandler::KeyToString(bob.GetKey()) << std::endl;
+    std::cout << "Alice's Key: " << SymCryptHandler::KeyToString(alice.GetKey()) << std::endl;
+    std::cout << "Bob's Key:   " << SymCryptHandler::KeyToString(bob.GetKey()) << std::endl;
 
     std::string original = "You're good.";
     std::string cipher = alice.Encrypt(original);
