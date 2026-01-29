@@ -68,10 +68,11 @@ TcpSocket TcpSocket::Accept()
     return TcpSocket(new_sockfd, addr);
 }
 
-void TcpSocket::Write(std::string message)
+int TcpSocket::Write(std::string message)
 {
     int success = write(_sockfd, (const void*) message.data(), message.size());
     CheckSyscall(success, "Failed to write to socket");
+    return success;
 }
 
 std::string TcpSocket::Read(std::size_t buffer_size)

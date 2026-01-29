@@ -22,7 +22,7 @@ class TcpSocket
     int Connect();
     int Listen(int backlog);
     TcpSocket Accept();
-    void Write(std::string message);
+    int Write(std::string message);
     std::string Read(std::size_t buffer_size);
     struct sockaddr_in GetAddr();
     int GetSockfd();
