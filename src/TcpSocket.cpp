@@ -10,44 +10,44 @@ TcpSocket::TcpSocket(int port, u_long interface)
 
     // Establish socket
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    TestConnection(_sockfd);
+    CheckSyscall(_sockfd, "Failed to create socket");
 }
 TcpSocket::TcpSocket(int sockfd, struct sockaddr_in addr)
 {
     // Create wrapper around existing socket
     _sockfd = sockfd;
     _addr = addr;
-    TestConnection(_sockfd);
+    CheckSyscall(_sockfd, "Failed to create wrapper around sockfd " + std::to_string(sockfd));
 }
 TcpSocket::~TcpSocket()
 {
     close(_sockfd);
 }
 
-void TcpSocket::TestConnection(int item)
+void TcpSocket::CheckSyscall(int result, std::string error_message)
 {
-    if(item < 0){
-        perror("Failed to connect");
-        exit(EXIT_FAILURE);
+    if(result < 0){
+        error_message = "ERROR: " + error_message;
+        perror(error_message.c_str());
     }
 }
 
 int TcpSocket::Bind()
 {
     int result = bind(_sockfd, (struct sockaddr*)&_addr, sizeof(_addr));
-    TestConnection(result);
+    CheckSyscall(result, "Failed to bind socket");
     return result;
 }
 int TcpSocket::Connect()
 {
     int result = connect(_sockfd, (struct sockaddr*)&_addr, sizeof(_addr));
-    TestConnection(result);
+    CheckSyscall(result, "Failed to connect socket");
     return result;
 }
 int TcpSocket::Listen(int backlog)
 {
     int result = listen(_sockfd, backlog);
-    TestConnection(result);
+    CheckSyscall(result, "Failed to listen from socket");
     return result;
 }
 TcpSocket TcpSocket::Accept()
@@ -61,7 +61,7 @@ TcpSocket TcpSocket::Accept()
 void TcpSocket::Write(std::string message)
 {
     int success = write(_sockfd, (const void*) message.data(), message.size());
-    TestConnection(success);
+    CheckSyscall(success, "Failed to write to socket");
 }
 
 std::string TcpSocket::Read(std::size_t buffer_size)
@@ -69,6 +69,7 @@ std::string TcpSocket::Read(std::size_t buffer_size)
     std::vector<char> buff(buffer_size + 1);
     int bytes = read(_sockfd, buff.data(), buffer_size);
 
+    CheckSyscall(-1, "Failed to read from socket");
     if (bytes <= 0)
         return "";
 

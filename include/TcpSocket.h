@@ -17,7 +17,7 @@ class TcpSocket
     TcpSocket(int port, u_long interface);
     TcpSocket(int sockfd, struct sockaddr_in addr);
     ~TcpSocket();
-    void TestConnection(int item);
+    void CheckSyscall(int result, std::string error_message);
     int Bind();
     int Connect();
     int Listen(int backlog);
