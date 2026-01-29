@@ -11,6 +11,16 @@ TcpSocket::TcpSocket(int port, u_long interface)
     // Establish socket
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
     CheckSyscall(_sockfd, "Failed to create socket");
+
+    int opt = 1;
+    int result = setsockopt(
+        _sockfd,
+        SOL_SOCKET,
+        SO_REUSEADDR,
+        &opt,
+        sizeof(opt)
+    );
+    CheckSyscall(_sockfd, "Failed to set sockopt");
 }
 TcpSocket::TcpSocket(int sockfd, struct sockaddr_in addr)
 {
@@ -69,7 +79,7 @@ std::string TcpSocket::Read(std::size_t buffer_size)
     std::vector<char> buff(buffer_size + 1);
     int bytes = read(_sockfd, buff.data(), buffer_size);
 
-    CheckSyscall(-1, "Failed to read from socket");
+    CheckSyscall(bytes, "Failed to read from socket");
     if (bytes <= 0)
         return "";
 
