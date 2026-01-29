@@ -10,18 +10,20 @@
 class TcpSocket
 {
     protected:
-    struct sockaddr_in m_address;
-    int m_sock;
+    struct sockaddr_in _addr;
+    int _sockfd;
 
     public:
     TcpSocket(int port, u_long interface);
+    TcpSocket(int sockfd);
     ~TcpSocket();
     void TestConnection(int item);
     int Bind();
     int Connect();
     int Listen(int backlog);
-    struct sockaddr_in GetAddress();
-    int GetSock();
+    TcpSocket Accept();
+    struct sockaddr_in GetAddr();
+    int GetSockfd();
 };
 
 #endif

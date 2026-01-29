@@ -3,17 +3,29 @@
 TcpSocket::TcpSocket(int port, u_long interface)
 {
     // Define address structure
-    m_address.sin_family = AF_INET;
-    m_address.sin_port = htons(port);
-    m_address.sin_addr.s_addr = htonl(interface);
+    _addr.sin_family = AF_INET;
+    _addr.sin_port = htons(port);
+    _addr.sin_addr.s_addr = htonl(interface);
 
     // Establish socket
-    m_sock = socket(AF_INET, SOCK_STREAM, 0);
-    TestConnection(m_sock);
+    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    TestConnection(_sockfd);
+}
+
+TcpSocket::TcpSocket(int sockfd)
+{
+    // Create wrapper around existing socket
+    _sockfd = sockfd;
+    TestConnection(_sockfd);
+
+    // Store address
+    socklen_t addr_len = sizeof(_addr);
+    int success = getsockname(sockfd, (struct sockaddr*)&_addr, &addr_len);
+    TestConnection(success);
 }
 
 TcpSocket::~TcpSocket(){
-    close(m_sock);
+    close(_sockfd);
 }
 
 void TcpSocket::TestConnection(int item){
@@ -24,23 +36,28 @@ void TcpSocket::TestConnection(int item){
 }
 
 int TcpSocket::Bind(){
-    int result = bind(m_sock, (struct sockaddr*)&m_address, sizeof(m_address));
+    int result = bind(_sockfd, (struct sockaddr*)&_addr, sizeof(_addr));
     TestConnection(result);
     return result;
 }
 int TcpSocket::Connect(){
-    int result = connect(m_sock, (struct sockaddr*)&m_address, sizeof(m_address));
+    int result = connect(_sockfd, (struct sockaddr*)&_addr, sizeof(_addr));
     TestConnection(result);
     return result;
 }
 int TcpSocket::Listen(int backlog){
-    int result = listen(m_sock, backlog);
+    int result = listen(_sockfd, backlog);
     TestConnection(result);
     return result;
 }
-struct sockaddr_in TcpSocket::GetAddress(){
-    return m_address;
+TcpSocket TcpSocket::Accept(){
+    int address_length = sizeof(_addr);
+    int new_sock = accept(_sockfd, (struct sockaddr *)&_addr, (socklen_t *)&address_length);
+    return TcpSocket(new_sock);
 }
-int TcpSocket::GetSock(){
-    return m_sock;
+struct sockaddr_in TcpSocket::GetAddr(){
+    return _addr;
+}
+int TcpSocket::GetSockfd(){
+    return _sockfd;
 }
