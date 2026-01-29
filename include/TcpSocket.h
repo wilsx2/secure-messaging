@@ -15,7 +15,7 @@ class TcpSocket
 
     public:
     TcpSocket(int port, u_long interface);
-    TcpSocket(int sockfd);
+    TcpSocket(int sockfd, struct sockaddr_in addr);
     ~TcpSocket();
     void TestConnection(int item);
     int Bind();

@@ -12,16 +12,12 @@ TcpSocket::TcpSocket(int port, u_long interface)
     TestConnection(_sockfd);
 }
 
-TcpSocket::TcpSocket(int sockfd)
+TcpSocket::TcpSocket(int sockfd, struct sockaddr_in addr)
 {
     // Create wrapper around existing socket
     _sockfd = sockfd;
+    _addr = addr;
     TestConnection(_sockfd);
-
-    // Store address
-    socklen_t addr_len = sizeof(_addr);
-    int success = getsockname(sockfd, (struct sockaddr*)&_addr, &addr_len);
-    TestConnection(success);
 }
 
 TcpSocket::~TcpSocket(){
@@ -51,9 +47,10 @@ int TcpSocket::Listen(int backlog){
     return result;
 }
 TcpSocket TcpSocket::Accept(){
-    int address_length = sizeof(_addr);
-    int new_sock = accept(_sockfd, (struct sockaddr *)&_addr, (socklen_t *)&address_length);
-    return TcpSocket(new_sock);
+    struct sockaddr_in addr;
+    int address_length = sizeof(addr);
+    int new_sockfd = accept(_sockfd, (struct sockaddr *)&_addr, (socklen_t *)&address_length);
+    return TcpSocket(new_sockfd, addr);
 }
 
 void TcpSocket::Write(std::string message){
@@ -63,8 +60,8 @@ void TcpSocket::Write(std::string message){
 
 std::string TcpSocket::Read(std::size_t buffer_size){
     char buff[buffer_size];
-    int success = read(_sockfd, buff, buffer_size);
-    TestConnection(success);
+    int bytes = read(_sockfd, buff, buffer_size);
+    buff[bytes] = '\n'; // Add null termination
     return std::string(buff);
 }
 
