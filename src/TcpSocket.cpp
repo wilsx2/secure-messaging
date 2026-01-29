@@ -55,6 +55,19 @@ TcpSocket TcpSocket::Accept(){
     int new_sock = accept(_sockfd, (struct sockaddr *)&_addr, (socklen_t *)&address_length);
     return TcpSocket(new_sock);
 }
+
+void TcpSocket::Write(std::string message){
+    int success = write(_sockfd, (const void*) message.data(), message.size());
+    TestConnection(success);
+}
+
+std::string TcpSocket::Read(std::size_t buffer_size){
+    char buff[buffer_size];
+    int success = read(_sockfd, buff, buffer_size);
+    TestConnection(success);
+    return std::string(buff);
+}
+
 struct sockaddr_in TcpSocket::GetAddr(){
     return _addr;
 }
