@@ -68,24 +68,18 @@ TcpSocket TcpSocket::Accept()
     return TcpSocket(new_sockfd, addr);
 }
 
-int TcpSocket::Write(std::string message)
+int TcpSocket::Write(const void* data, std::size_t size)
 {
-    int success = write(_sockfd, (const void*) message.data(), message.size());
+    int success = write(_sockfd, data, size);
     CheckSyscall(success, "Failed to write to socket");
     return success;
 }
 
-std::string TcpSocket::Read(std::size_t buffer_size)
+int TcpSocket::Read(void* data, std::size_t size)
 {
-    std::vector<char> buff(buffer_size + 1);
-    int bytes = read(_sockfd, buff.data(), buffer_size);
-
+    int bytes = read(_sockfd, data, size);
     CheckSyscall(bytes, "Failed to read from socket");
-    if (bytes <= 0)
-        return "";
-
-    buff[bytes] = '\0';
-    return std::string(buff.data());
+    return bytes;
 }
 
 

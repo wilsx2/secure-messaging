@@ -2,6 +2,7 @@
 #define TCP_SOCKET_H
 
 #include <iostream>
+#include <vector>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -22,8 +23,8 @@ class TcpSocket
     int Connect();
     int Listen(int backlog);
     TcpSocket Accept();
-    int Write(std::string message);
-    std::string Read(std::size_t buffer_size);
+    int Write(const void* data, std::size_t size);
+    int Read(void* data, std::size_t size);
     struct sockaddr_in GetAddr();
     int GetSockfd();
 };

@@ -14,10 +14,12 @@ void server()
 
     TcpSocket client = serverSocket.Accept();
 
-    std::string msg = client.Read(1024);
-    std::cout << "[Server] Received: " << msg << std::endl;
+    char buff[1024];
+    client.Read(buff, sizeof(buff));
+    std::cout << "[Server] Received: " << std::string(buff) << std::endl;
 
-    client.Write("Hello from server");
+    char msg[] = "Hello from server";
+    client.Write(msg, sizeof(msg));
 }
 
 void client()
@@ -28,10 +30,12 @@ void client()
     TcpSocket clientSocket(PORT, INADDR_LOOPBACK);
     clientSocket.Connect();
 
-    clientSocket.Write("Hello from client");
+    char msg[] = "Hello from client";
+    clientSocket.Write(msg, sizeof(msg));
 
-    std::string response = clientSocket.Read(1024);
-    std::cout << "[Client] Received: " << response << std::endl;
+    char buff[1024];
+    clientSocket.Read(buff, sizeof(buff));
+    std::cout << "[Client] Received: " << std::string(buff) << std::endl;
 }
 
 int main()
