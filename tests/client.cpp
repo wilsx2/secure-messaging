@@ -14,7 +14,8 @@ int main()
         std::string output;
         std::cin >> output;
         channel.Send(output);
-        std::string message = channel.Receive();
+        std::string message;
+        channel.Receive(message);
         std::cout << "[Client] Received: " << message << std::endl;
     }
 

@@ -29,8 +29,8 @@ void Server::HandleConnection(TcpSocket socket)
     std::cout << "[Server] New connection" << std::endl;
     while (true)
     {
-        std::string message = channel.Receive();
-        if (message == "")
+        std::string message;
+        if (channel.Receive(message) <= 0)
             break;
         std::cout << "[Server] Received: " << message << std::endl;
         channel.Send("Hello from server");
