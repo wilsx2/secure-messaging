@@ -26,12 +26,16 @@ void Server::HandleConnection(TcpSocket socket)
 {
     SecureChannel channel (socket, HostType::Server);
 
+    std::cout << "[Server] New connection" << std::endl;
     while (true)
     {
         std::string message = channel.Receive();
+        if (message == "")
+            break;
         std::cout << "[Server] Received: " << message << std::endl;
         channel.Send("Hello from server");
     }
+    std::cout << "[Server] Closed connection" << std::endl;
     
     socket.Close();
 }
