@@ -1,4 +1,5 @@
 #include "TcpSocket.h"
+#include <fcntl.h>
 #include <vector>
 
 TcpSocket::TcpSocket(int port, u_long interface)
@@ -41,6 +42,13 @@ void TcpSocket::CheckSyscall(int result, std::string error_message)
         error_message = "ERROR: " + error_message;
         perror(error_message.c_str());
     }
+}
+
+int TcpSocket::SetNonBlocking()
+{
+    int flags = fcntl(_sockfd, F_GETFL, 0);
+    if (flags == -1) return -1;
+    return fcntl(_sockfd, F_SETFL, flags | O_NONBLOCK);
 }
 
 int TcpSocket::Bind()

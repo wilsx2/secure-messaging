@@ -18,13 +18,18 @@ class TcpSocket
     TcpSocket(int port, u_long interface);
     TcpSocket(int sockfd, struct sockaddr_in addr);
     void Close();
+
     void CheckSyscall(int result, std::string error_message);
+
+    int SetNonBlocking();
+
     int Bind();
     int Connect();
     int Listen(int backlog);
     TcpSocket Accept();
     int Send(const void* data, std::size_t size);
     int Receive(void* data, std::size_t size);
+
     struct sockaddr_in GetAddr();
     int GetSockfd();
 };
