@@ -54,11 +54,6 @@ SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
         salt, strlen((const char*)salt), 
         info, strlen((const char*)info)
     );
-
-    // Output
-    Integer ss;
-    ss.Decode(_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
-    std::cout << "Shared secret: " << std::hex << ss << std::endl;
 }
 
 void SecureChannel::Send(const std::string& plaintext)
