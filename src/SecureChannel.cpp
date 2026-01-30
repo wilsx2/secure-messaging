@@ -56,7 +56,7 @@ SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
     );
 }
 
-void SecureChannel::Send(const std::string& plaintext)
+int SecureChannel::Send(const std::string& message)
 {
     AES::Encryption aesEncryption(_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
     std::string ciphertext;
@@ -72,38 +72,39 @@ void SecureChannel::Send(const std::string& plaintext)
     // Append Body
     CBC_Mode_ExternalCipher::Encryption cbcEncryption( aesEncryption, iv );
     StreamTransformationFilter stfEncryptor(cbcEncryption, new StringSink(ciphertext));
-    stfEncryptor.Put(reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.length());
+    stfEncryptor.Put(reinterpret_cast<const unsigned char*>(message.c_str()), message.length());
     stfEncryptor.MessageEnd();
 
     // Write encrypted message to socket
-    _socket.Write(ciphertext.data(), ciphertext.size());
+    return _socket.Write(ciphertext.data(), ciphertext.size());
 }
 
-std::string SecureChannel::Receive()
+int SecureChannel::Receive(std::string& message)
 {
+    std::string output = "";
+
     // Read encrypted message from socket
     char ciphertext [1024]; // TODO: Write and read message size
     std::size_t ciphertext_size = _socket.Read(ciphertext, sizeof(ciphertext));
-    if (ciphertext_size <= 0)
-        return "";
+    if (ciphertext_size > 0)
+    {
+        // Decrypt Ciphertext
+        AES::Decryption aesDecryption (_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
 
-    // Decrypt Ciphertext
-    AES::Decryption aesDecryption (_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
+        /// Copy IV
+        byte iv [AES::BLOCKSIZE];
+        memcpy(iv, ciphertext, AES::BLOCKSIZE);
 
-    /// Copy IV
-    byte iv [AES::BLOCKSIZE];
-    memcpy(iv, ciphertext, AES::BLOCKSIZE);
+        /// Decrypt body
+        CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
+        StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(output));
+        stfDecryptor.Put(
+            reinterpret_cast<const unsigned char*>(ciphertext + AES::BLOCKSIZE),
+            ciphertext_size - AES::BLOCKSIZE
+        );
+        stfDecryptor.MessageEnd();
+    }
 
-    /// Decrypt body
-    std::string decrypted;
-    CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
-    StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(decrypted));
-    stfDecryptor.Put(
-        reinterpret_cast<const unsigned char*>(ciphertext + AES::BLOCKSIZE),
-        ciphertext_size - AES::BLOCKSIZE
-    );
-    stfDecryptor.MessageEnd();
-
-    // Return original message
-    return decrypted;
+    message = output;
+    return ciphertext_size;
 }
