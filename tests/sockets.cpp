@@ -20,6 +20,9 @@ void server()
 
     char msg[] = "Hello from server";
     client.Write(msg, sizeof(msg));
+
+    client.Close();
+    serverSocket.Close();
 }
 
 void client()
@@ -36,6 +39,8 @@ void client()
     char buff[1024];
     clientSocket.Read(buff, sizeof(buff));
     std::cout << "[Client] Received: " << std::string(buff) << std::endl;
+
+    clientSocket.Close();
 }
 
 int main()

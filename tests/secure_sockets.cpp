@@ -41,6 +41,9 @@ void server()
     Integer ss;
     ss.Decode(shared.BytePtr(), shared.SizeInBytes());
     cout << "[Server] Shared secret: " << hex << ss << endl;
+
+    client.Close();
+    serverSocket.Close();
 }
 
 void client()
@@ -70,6 +73,8 @@ void client()
     Integer ss;
     ss.Decode(shared.BytePtr(), shared.SizeInBytes());
     cout << "[Client] Shared secret: " << hex << ss << endl;
+
+    clientSocket.Close();
 }
 
 int main()
