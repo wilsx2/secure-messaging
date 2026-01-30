@@ -69,16 +69,16 @@ TcpSocket TcpSocket::Accept()
     return TcpSocket(new_sockfd, addr);
 }
 
-int TcpSocket::Write(const void* data, std::size_t size)
+int TcpSocket::Send(const void* data, std::size_t size)
 {
-    int success = write(_sockfd, data, size);
+    int success = send(_sockfd, data, size, 0); // TODO: Add flags, handle message boundaries
     CheckSyscall(success, "Failed to write to socket");
     return success;
 }
 
-int TcpSocket::Read(void* data, std::size_t size)
+int TcpSocket::Receive(void* data, std::size_t size)
 {
-    int bytes = read(_sockfd, data, size);
+    int bytes = recv(_sockfd, data, size, 0); // TODO: Add flags, handle message boundaries
     CheckSyscall(bytes, "Failed to read from socket");
     return bytes;
 }

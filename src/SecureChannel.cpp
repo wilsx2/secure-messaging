@@ -31,13 +31,13 @@ SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
 
     if (host_type == HostType::Client)
     {
-        _socket.Write(pub.BytePtr(), pub.SizeInBytes());
-        _socket.Read(pubOther.BytePtr(), pubOther.SizeInBytes());
+        _socket.Send(pub.BytePtr(), pub.SizeInBytes());
+        _socket.Receive(pubOther.BytePtr(), pubOther.SizeInBytes());
     }
     else // host_type == HostType::Server
     {
-        _socket.Read(pubOther.BytePtr(), pubOther.SizeInBytes());
-        _socket.Write(pub.BytePtr(), pub.SizeInBytes());
+        _socket.Receive(pubOther.BytePtr(), pubOther.SizeInBytes());
+        _socket.Send(pub.BytePtr(), pub.SizeInBytes());
     }
     
     if(!dh.Agree(shared, priv, pubOther))
@@ -76,16 +76,16 @@ int SecureChannel::Send(const std::string& message)
     stfEncryptor.MessageEnd();
 
     // Write encrypted message to socket
-    return _socket.Write(ciphertext.data(), ciphertext.size());
+    return _socket.Send(ciphertext.data(), ciphertext.size());
 }
 
 int SecureChannel::Receive(std::string& message)
 {
     std::string output = "";
 
-    // Read encrypted message from socket
+    // Receive encrypted message from socket
     char ciphertext [1024]; // TODO: Write and read message size
-    std::size_t ciphertext_size = _socket.Read(ciphertext, sizeof(ciphertext));
+    std::size_t ciphertext_size = _socket.Receive(ciphertext, sizeof(ciphertext));
     if (ciphertext_size > 0)
     {
         // Decrypt Ciphertext

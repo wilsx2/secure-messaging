@@ -23,8 +23,8 @@ class TcpSocket
     int Connect();
     int Listen(int backlog);
     TcpSocket Accept();
-    int Write(const void* data, std::size_t size);
-    int Read(void* data, std::size_t size);
+    int Send(const void* data, std::size_t size);
+    int Receive(void* data, std::size_t size);
     struct sockaddr_in GetAddr();
     int GetSockfd();
 };
