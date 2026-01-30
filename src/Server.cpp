@@ -4,17 +4,21 @@
 
 Server::Server()
     : _socket(PORT, INADDR_ANY)
-{ }
+{
+    _socket.Bind();
+    _socket.Listen(1);
+}
+Server::~Server()
+{
+    _socket.Close();
+}
 
 void Server::Run()
 {
     while(true)
     {
         TcpSocket new_connection = _socket.Accept();
-        if (_threads.size() < 16)
-            _threads.emplace_back([&](){HandleConnection(new_connection);});
-        else
-            new_connection.Close();
+        HandleConnection(new_connection);
     }
 }
 

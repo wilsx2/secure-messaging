@@ -8,13 +8,13 @@
 class Server
 {
     private:
-    std::vector<std::thread> _threads;
     TcpSocket _socket;
 
     void HandleConnection(TcpSocket socket);
 
     public:
     Server();
+    ~Server();
     void Run();
 };
 
