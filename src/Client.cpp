@@ -1,6 +1,7 @@
 #include "Client.h"
 #include "Global.h"
 #include "SecureChannel.h"
+#include <thread>
 
 Client::Client()
     : _socket(PORT, INADDR_LOOPBACK)
@@ -12,17 +13,27 @@ Client::~Client()
     _socket.Close();
 }
 
-void Client::Run()
+void Client::ReceiveLoop(SecureChannel& channel)
 {
-    SecureChannel channel (_socket, HostType::Client);
-
+    std::string message;
     while (true)
     {
-        std::string output;
-        std::cin >> output;
-        channel.Send(output);
-        std::string message;
         channel.Receive(message);
         std::cout << "[Client] Received: " << message << std::endl;
     }
+}
+
+void Client::Run()
+{
+    SecureChannel channel (_socket, HostType::Client);
+    std::thread rec ([&](){ReceiveLoop(channel);});
+
+    std::string message;
+    while (true)
+    {
+        std::cin >> message;
+        channel.Send(message);
+    }
+        
+    rec.join();
 }
