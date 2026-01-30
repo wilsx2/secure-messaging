@@ -29,7 +29,8 @@ TcpSocket::TcpSocket(int sockfd, struct sockaddr_in addr)
     _addr = addr;
     CheckSyscall(_sockfd, "Failed to create wrapper around sockfd " + std::to_string(sockfd));
 }
-TcpSocket::~TcpSocket()
+
+void TcpSocket::Close()
 {
     close(_sockfd);
 }
