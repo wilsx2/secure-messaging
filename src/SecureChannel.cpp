@@ -8,6 +8,12 @@
 #include <cryptopp/osrng.h>
 #include <cryptopp/asn.h>
 #include <cryptopp/secblock.h>
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/modes.h>
+#include <cryptopp/hkdf.h>
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
 
 using namespace CryptoPP;
 
@@ -53,4 +59,54 @@ SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
     Integer ss;
     ss.Decode(_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
     std::cout << "Shared secret: " << std::hex << ss << std::endl;
+}
+
+void SecureChannel::Send(const std::string& plaintext)
+{
+    AES::Encryption aesEncryption(_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
+    std::string ciphertext;
+
+    // Generate IV
+    AutoSeededRandomPool osrng;
+    byte iv [AES::BLOCKSIZE];
+    osrng.GenerateBlock(iv, AES::BLOCKSIZE);
+
+    // Prepend IV
+    ciphertext.append(reinterpret_cast<const char*>(iv), sizeof(iv));
+
+    // Append Body
+    CBC_Mode_ExternalCipher::Encryption cbcEncryption( aesEncryption, iv );
+    StreamTransformationFilter stfEncryptor(cbcEncryption, new StringSink(ciphertext));
+    stfEncryptor.Put(reinterpret_cast<const unsigned char*>(plaintext.c_str()), plaintext.length());
+    stfEncryptor.MessageEnd();
+
+    // Write encrypted message to socket
+    _socket.Write(ciphertext.data(), ciphertext.size());
+}
+
+std::string SecureChannel::Receive()
+{
+    // Read encrypted message from socket
+    char ciphertext [1024]; // TODO: Write and read message size
+    std::size_t ciphertext_size = _socket.Read(ciphertext, sizeof(ciphertext));
+
+    // Decrypt Ciphertext
+    AES::Decryption aesDecryption (_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
+
+    /// Copy IV
+    byte iv [AES::BLOCKSIZE];
+    memcpy(iv, ciphertext, AES::BLOCKSIZE);
+
+    /// Decrypt body
+    std::string decrypted;
+    CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
+    StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(decrypted));
+    stfDecryptor.Put(
+        reinterpret_cast<const unsigned char*>(ciphertext + AES::BLOCKSIZE),
+        ciphertext_size - AES::BLOCKSIZE
+    );
+    stfDecryptor.MessageEnd();
+
+    // Return original message
+    return decrypted;
 }

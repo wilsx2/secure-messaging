@@ -13,9 +13,8 @@ class SecureChannel
 
     public:
     SecureChannel(TcpSocket socket, HostType host_type);
-
-    // void Send(const std::string& plaintext);
-    // std::string Receive(const std::string& ciphertext);
+    void Send(const std::string& plaintext);
+    std::string Receive();
 };
 
 #endif

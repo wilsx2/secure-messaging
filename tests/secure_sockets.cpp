@@ -26,6 +26,10 @@ void server()
 
     SecureChannel channel (client, HostType::Server);
 
+    std::string message = channel.Receive();
+    std::cout << "[Server] Received: " << message << std::endl;
+    channel.Send("Hello from server");
+
     client.Close();
     serverSocket.Close();
 }
@@ -40,6 +44,9 @@ void client()
 
     SecureChannel channel (clientSocket, HostType::Client);
 
+    channel.Send("Hello from client");
+    std::string message = channel.Receive();
+    std::cout << "[Client] Received: " << message << std::endl;
 
     clientSocket.Close();
 }
