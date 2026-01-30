@@ -18,7 +18,7 @@ void Server::Run()
     while(true)
     {
         TcpSocket new_connection = _socket.Accept();
-        HandleConnection(new_connection);
+        _pool.Enqueue([&](){HandleConnection(new_connection);});
     }
 }
 
