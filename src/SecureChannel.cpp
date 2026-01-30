@@ -84,6 +84,8 @@ std::string SecureChannel::Receive()
     // Read encrypted message from socket
     char ciphertext [1024]; // TODO: Write and read message size
     std::size_t ciphertext_size = _socket.Read(ciphertext, sizeof(ciphertext));
+    if (ciphertext_size <= 0)
+        return "";
 
     // Decrypt Ciphertext
     AES::Decryption aesDecryption (_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
