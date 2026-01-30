@@ -1,20 +1,21 @@
 #ifndef SECURE_CHANNEL_H
 #define SECURE_CHANNEL_H
 
+#include "TcpSocket.h"
 #include <cryptopp/secblock.h>
 
-// TODO: Generics for keylength
+enum class HostType { Client, Server };
 class SecureChannel
 {
     private:
-    // TcpSocket& socket_
-    // CryptoPP::SecByteBlock _sessionKey;
+    TcpSocket _socket;
+    CryptoPP::SecByteBlock _sessionKey;
 
     public:
-    SecureChannel();
+    SecureChannel(TcpSocket socket, HostType host_type);
 
-    void Send(const std::string& plaintext);
-    std::string Receive(const std::string& ciphertext);
+    // void Send(const std::string& plaintext);
+    // std::string Receive(const std::string& ciphertext);
 };
 
 #endif
