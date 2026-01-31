@@ -19,6 +19,7 @@ void Client::ReceiveLoop(SecureChannel& channel)
     while (true)
     {
         channel.Receive(message);
+        
         std::cout << "[Client] Received: " << message << std::endl;
     }
 }
@@ -31,7 +32,7 @@ void Client::Run()
     std::string message;
     while (true)
     {
-        std::cin >> message;
+        std::getline(std::cin, message);
         channel.Send(message);
     }
         

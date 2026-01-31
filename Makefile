@@ -12,7 +12,7 @@ EXES := $(foreach exe, $(TESTS:%.cpp=%.exe), $(BUILD_DIR)/$(notdir $(exe)))
 
 # Compiler settings
 CC := g++
-CFLAGS := -I$(INC_DIR) -I$(BUILD_DIR)
+CFLAGS := -I$(INC_DIR) -I$(BUILD_DIR) -std=c++20
 DEPS := -lcryptopp 
 
 # Targets
