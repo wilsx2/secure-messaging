@@ -30,6 +30,14 @@ TcpSocket::TcpSocket(int sockfd, struct sockaddr_in addr)
     _addr = addr;
     CheckSyscall(_sockfd, "Failed to create wrapper around sockfd " + std::to_string(sockfd));
 }
+TcpSocket::TcpSocket(int sockfd)
+{
+    // Create wrapper around existing socket
+    _sockfd = sockfd;
+    socklen_t addr_len = sizeof(_addr);
+    getsockname(sockfd, (sockaddr*)&_addr, &addr_len);
+    CheckSyscall(_sockfd, "Failed to create wrapper around sockfd " + std::to_string(sockfd));
+}
 
 void TcpSocket::Close()
 {

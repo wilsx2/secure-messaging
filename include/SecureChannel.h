@@ -9,12 +9,15 @@ class SecureChannel
 {
     private:
     TcpSocket _socket;
-    CryptoPP::SecByteBlock _sessionKey;
+    CryptoPP::SecByteBlock _session_key;
 
     public:
     SecureChannel(TcpSocket socket, HostType host_type);
+    SecureChannel(const SecureChannel& other);
     int Send(const std::string& message);
     int Receive(std::string& message);
+
+    
 };
 
 #endif

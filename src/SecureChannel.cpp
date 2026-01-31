@@ -19,7 +19,7 @@ using namespace CryptoPP;
 
 SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
     : _socket(socket)
-    , _sessionKey(AES::DEFAULT_KEYLENGTH)
+    , _session_key(AES::DEFAULT_KEYLENGTH)
 {
     // Key Agreement
     OID CURVE = ASN1::secp256r1();
@@ -49,16 +49,20 @@ SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
     byte info[] = "secure messaging";
     byte salt[] = "salt";
     hkdf.DeriveKey(
-        _sessionKey.BytePtr(), _sessionKey.SizeInBytes(), 
+        _session_key.BytePtr(), _session_key.SizeInBytes(), 
         shared.BytePtr(), shared.SizeInBytes(),
         salt, strlen((const char*)salt), 
         info, strlen((const char*)info)
     );
 }
+SecureChannel::SecureChannel(const SecureChannel& other)
+    : _socket(other._socket)
+    , _session_key(other._session_key)
+{}
 
 int SecureChannel::Send(const std::string& message)
 {
-    AES::Encryption aesEncryption(_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
+    AES::Encryption aesEncryption(_session_key.BytePtr(), _session_key.SizeInBytes());
     std::string ciphertext;
 
     // Generate IV
@@ -89,7 +93,7 @@ int SecureChannel::Receive(std::string& message)
     if (ciphertext_size > 0)
     {
         // Decrypt Ciphertext
-        AES::Decryption aesDecryption (_sessionKey.BytePtr(), _sessionKey.SizeInBytes());
+        AES::Decryption aesDecryption (_session_key.BytePtr(), _session_key.SizeInBytes());
 
         /// Copy IV
         byte iv [AES::BLOCKSIZE];

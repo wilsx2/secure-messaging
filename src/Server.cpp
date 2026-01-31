@@ -18,24 +18,32 @@ void Server::Run()
     while(true)
     {
         TcpSocket new_connection = _socket.Accept();
-        _pool.Enqueue([&](){HandleConnection(new_connection);});
+        _pool.Enqueue([&](){ HandleConnection(new_connection); });
     }
 }
 
 void Server::HandleConnection(TcpSocket socket)
 {
     SecureChannel channel (socket, HostType::Server);
-
+    _clients.emplace(socket.GetSockfd(), channel);
     std::cout << "[Server] New connection" << std::endl;
+
     while (true)
     {
         std::string message;
         if (channel.Receive(message) <= 0)
             break;
         std::cout << "[Server] Received: " << message << std::endl;
-        channel.Send("Hello from server");
+        
+        // Send
+        for (auto& pair : _clients)
+        {
+            if (pair.first != socket.GetSockfd())
+                pair.second.Send(message);
+        }
     }
-    std::cout << "[Server] Closed connection" << std::endl;
     
+    _clients.erase(socket.GetSockfd());
     socket.Close();
+    std::cout << "[Server] Closed connection" << std::endl;
 }

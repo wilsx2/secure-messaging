@@ -17,6 +17,7 @@ class TcpSocket
     public:
     TcpSocket(int port, u_long interface);
     TcpSocket(int sockfd, struct sockaddr_in addr);
+    TcpSocket(int sockfd);
     void Close();
 
     void CheckSyscall(int result, std::string error_message);
