@@ -16,8 +16,7 @@ class SecureChannel
     SecureChannel(const SecureChannel& other);
     int Send(const std::string& message);
     int Receive(std::string& message);
-
-    
+    TcpSocket GetSocket();
 };
 
 #endif

@@ -112,3 +112,8 @@ int SecureChannel::Receive(std::string& message)
     message = output;
     return ciphertext_size;
 }
+
+TcpSocket SecureChannel::GetSocket()
+{
+    return _socket;
+}
