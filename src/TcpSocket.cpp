@@ -1,6 +1,7 @@
 #include "TcpSocket.h"
 #include <fcntl.h>
 #include <vector>
+#include <cstring>
 
 TcpSocket::TcpSocket(int port, u_long interface)
 {
@@ -92,11 +93,55 @@ int TcpSocket::Send(const void* data, std::size_t size)
     return success;
 }
 
+int TcpSocket::SendAll(const std::vector<uint8_t>& bytes)
+{
+    std::size_t message_len = bytes.size();
+    if (Send(&message_len, sizeof(message_len)) < 0)
+        return -1;
+    return Send(bytes.data(), message_len);
+}
+
 int TcpSocket::Receive(void* data, std::size_t size)
 {
     int bytes = recv(_sockfd, data, size, 0); // TODO: Add flags, handle message boundaries
     CheckSyscall(bytes, "Failed to read from socket");
     return bytes;
+}
+
+int TcpSocket::ReceiveAll(std::vector<uint8_t>& bytes)
+{
+    std::vector<uint8_t> message;
+    std::size_t message_len;
+
+    // Parse Message Length
+    int total_received = 0;
+    while (total_received < sizeof(message_len))
+    {
+        std::size_t last_received = Receive(
+            &message_len + total_received,
+            sizeof(message_len) - total_received
+        );
+        if (last_received <= 0)
+            return -1;
+        total_received += last_received;
+    }
+
+    // Parse Message
+    message.resize(message_len);
+    total_received = 0;
+    while (total_received < message_len)
+    {
+        std::size_t last_received = Receive(
+            message.data() + total_received,
+            message_len - total_received
+        );
+        if (last_received <= 0)
+            return -1;
+        total_received += last_received;
+    }
+
+    bytes = std::move(message);
+    return total_received;
 }
 
 

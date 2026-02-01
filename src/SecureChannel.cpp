@@ -84,7 +84,7 @@ int SecureChannel::Send(const std::vector<uint8_t>& message)
     stfEncryptor.MessageEnd();
 
     // Write encrypted message to socket
-    return _socket.Send(ciphertext.data(), ciphertext.size());
+    return _socket.SendAll(ciphertext);
 }
 
 int SecureChannel::Receive(std::vector<uint8_t>& message)
@@ -92,8 +92,8 @@ int SecureChannel::Receive(std::vector<uint8_t>& message)
     std::vector<uint8_t> output;
 
     // Receive encrypted message from socket
-    char ciphertext [1024]; // TODO: Write and read message size
-    std::size_t ciphertext_size = _socket.Receive(ciphertext, sizeof(ciphertext));
+    std::vector<uint8_t> ciphertext; // TODO: Write and read message size
+    std::size_t ciphertext_size = _socket.ReceiveAll(ciphertext);
     if (ciphertext_size > 0)
     {
         // Decrypt Ciphertext
@@ -101,14 +101,14 @@ int SecureChannel::Receive(std::vector<uint8_t>& message)
 
         /// Copy IV
         byte iv [AES::BLOCKSIZE];
-        memcpy(iv, ciphertext, AES::BLOCKSIZE);
+        memcpy(iv, ciphertext.data(), AES::BLOCKSIZE);
 
         /// Decrypt body
         CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
         StreamTransformationFilter stfDecryptor(cbcDecryption, new VectorSink(output));
         stfDecryptor.Put(
-            reinterpret_cast<const unsigned char*>(ciphertext + AES::BLOCKSIZE),
-            ciphertext_size - AES::BLOCKSIZE
+            reinterpret_cast<const unsigned char*>(ciphertext.data() + AES::BLOCKSIZE),
+            ciphertext.size() - AES::BLOCKSIZE
         );
         stfDecryptor.MessageEnd();
     }

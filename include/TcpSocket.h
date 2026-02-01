@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cstdint>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -29,7 +30,9 @@ class TcpSocket
     int Listen(int backlog);
     TcpSocket Accept();
     int Send(const void* data, std::size_t size);
+    int SendAll(const std::vector<uint8_t>& bytes);
     int Receive(void* data, std::size_t size);
+    int ReceiveAll(std::vector<uint8_t>& bytes);
 
     struct sockaddr_in GetAddr();
     int GetSockfd();
