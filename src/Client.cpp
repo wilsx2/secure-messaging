@@ -1,6 +1,7 @@
 #include "Client.h"
 #include "Global.h"
 #include "SecureChannel.h"
+#include "Message.h"
 #include <thread>
 
 Client::Client()
@@ -15,13 +16,14 @@ Client::~Client()
 
 void Client::ReceiveLoop(SecureChannel& channel)
 {
+    Message message;
     std::vector<uint8_t> data;
     while (true)
     {
-        channel.Receive(data);
-        
-        std::string message (data.begin(), data.end());
-        std::cout << "[Client] Received: " << message << std::endl;
+        if (channel.Receive(data) > 0 && message.Deserialize(data))
+        {
+            std::cout << "[Client] Received: " << message.ToString() << std::endl;
+        }
     }
 }
 
@@ -30,13 +32,15 @@ void Client::Run()
     SecureChannel channel (_socket, HostType::Client);
     std::thread rec ([&](){ReceiveLoop(channel);});
 
-    std::string message;
+    Message message;
+    message.Set("type", "chat");
+    message.Set("from", "client");
+    std::string content;
     while (true)
     {
-        std::getline(std::cin, message);
-
-        std::vector<uint8_t> data (message.begin(), message.end());
-        channel.Send(data);
+        std::getline(std::cin, content);
+        message.Set("content", content);
+        channel.Send(message.Serialize());
     }
         
     rec.join();

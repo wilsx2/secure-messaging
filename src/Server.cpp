@@ -1,6 +1,7 @@
 #include "Global.h"
 #include "Server.h"
 #include "SecureChannel.h"
+#include "Message.h"
 
 Server::Server()
     : _socket(PORT, INADDR_ANY)
@@ -28,20 +29,25 @@ void Server::HandleConnection(TcpSocket socket)
     _clients.emplace(socket.GetSockfd(), channel);
     std::cout << "[Server] New connection" << std::endl;
 
+    Message message;
     while (true)
     {
-        std::vector<uint8_t> data;
-        if (channel.Receive(data) <= 0)
-            break;
-        
-        std::string message (data.begin(), data.end());
-        std::cout << "[Server] Received: " << message << std::endl;
-        
-        // Send
-        for (auto& pair : _clients)
+        std::vector<uint8_t> data;        
+        if (channel.Receive(data) > 0 && message.Deserialize(data))
         {
-            if (pair.first != socket.GetSockfd())
-                pair.second.Send(data);
+            std::cout << "[Server] Received: " << message.ToString() << std::endl;
+            
+            // Send
+            for (auto& pair : _clients)
+            {
+                message.Set("from", "server");
+                if (pair.first != socket.GetSockfd())
+                    pair.second.Send(message.Serialize());
+            }
+        }
+        else
+        {
+            break;
         }
     }
     
