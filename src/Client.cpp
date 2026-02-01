@@ -15,11 +15,12 @@ Client::~Client()
 
 void Client::ReceiveLoop(SecureChannel& channel)
 {
-    std::string message;
+    std::vector<uint8_t> data;
     while (true)
     {
-        channel.Receive(message);
+        channel.Receive(data);
         
+        std::string message (data.begin(), data.end());
         std::cout << "[Client] Received: " << message << std::endl;
     }
 }
@@ -33,7 +34,9 @@ void Client::Run()
     while (true)
     {
         std::getline(std::cin, message);
-        channel.Send(message);
+
+        std::vector<uint8_t> data (message.begin(), message.end());
+        channel.Send(data);
     }
         
     rec.join();

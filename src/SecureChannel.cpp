@@ -60,10 +60,10 @@ SecureChannel::SecureChannel(const SecureChannel& other)
     , _session_key(other._session_key)
 {}
 
-int SecureChannel::Send(const std::string& message)
+int SecureChannel::Send(const std::vector<uint8_t>& message)
 {
     AES::Encryption aesEncryption(_session_key.BytePtr(), _session_key.SizeInBytes());
-    std::string ciphertext;
+    std::vector<uint8_t> ciphertext;
 
     // Generate IV
     AutoSeededRandomPool osrng;
@@ -71,21 +71,25 @@ int SecureChannel::Send(const std::string& message)
     osrng.GenerateBlock(iv, AES::BLOCKSIZE);
 
     // Prepend IV
-    ciphertext.append(reinterpret_cast<const char*>(iv), sizeof(iv));
+    ciphertext.insert(
+        ciphertext.end(),
+        reinterpret_cast<uint8_t*>(iv),
+        iv + sizeof(iv)
+    );
 
     // Append Body
     CBC_Mode_ExternalCipher::Encryption cbcEncryption( aesEncryption, iv );
-    StreamTransformationFilter stfEncryptor(cbcEncryption, new StringSink(ciphertext));
-    stfEncryptor.Put(reinterpret_cast<const unsigned char*>(message.c_str()), message.length());
+    StreamTransformationFilter stfEncryptor(cbcEncryption, new VectorSink(ciphertext));
+    stfEncryptor.Put(reinterpret_cast<const unsigned char*>(message.data()), message.size());
     stfEncryptor.MessageEnd();
 
     // Write encrypted message to socket
     return _socket.Send(ciphertext.data(), ciphertext.size());
 }
 
-int SecureChannel::Receive(std::string& message)
+int SecureChannel::Receive(std::vector<uint8_t>& message)
 {
-    std::string output = "";
+    std::vector<uint8_t> output;
 
     // Receive encrypted message from socket
     char ciphertext [1024]; // TODO: Write and read message size
@@ -101,7 +105,7 @@ int SecureChannel::Receive(std::string& message)
 
         /// Decrypt body
         CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
-        StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(output));
+        StreamTransformationFilter stfDecryptor(cbcDecryption, new VectorSink(output));
         stfDecryptor.Put(
             reinterpret_cast<const unsigned char*>(ciphertext + AES::BLOCKSIZE),
             ciphertext_size - AES::BLOCKSIZE

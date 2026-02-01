@@ -3,6 +3,8 @@
 
 #include "TcpSocket.h"
 #include <cryptopp/secblock.h>
+#include <vector>
+#include <cstdint>
 
 enum class HostType { Client, Server };
 class SecureChannel
@@ -14,8 +16,8 @@ class SecureChannel
     public:
     SecureChannel(TcpSocket socket, HostType host_type);
     SecureChannel(const SecureChannel& other);
-    int Send(const std::string& message);
-    int Receive(std::string& message);
+    int Send(const std::vector<uint8_t>& message);
+    int Receive(std::vector<uint8_t>& message);
     TcpSocket GetSocket();
 };
 

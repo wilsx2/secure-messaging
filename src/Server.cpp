@@ -30,16 +30,18 @@ void Server::HandleConnection(TcpSocket socket)
 
     while (true)
     {
-        std::string message;
-        if (channel.Receive(message) <= 0)
+        std::vector<uint8_t> data;
+        if (channel.Receive(data) <= 0)
             break;
+        
+        std::string message (data.begin(), data.end());
         std::cout << "[Server] Received: " << message << std::endl;
         
         // Send
         for (auto& pair : _clients)
         {
             if (pair.first != socket.GetSockfd())
-                pair.second.Send(message);
+                pair.second.Send(data);
         }
     }
     
