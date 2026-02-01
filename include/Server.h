@@ -17,7 +17,9 @@ class Server
     ThreadPool _pool;
     std::map<int, SecureChannel> _clients;
 
-    void HandleConnection(TcpSocket socket);
+    void EstablishConnection(TcpSocket client_socket);
+    void HandleRequest(TcpSocket client_socket);
+    void EventLoop();
 
     public:
     Server();
