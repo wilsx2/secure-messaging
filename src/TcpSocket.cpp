@@ -115,7 +115,7 @@ int TcpSocket::ReceiveAll(void* data, std::size_t size)
     while (total_received < size)
     {
         std::size_t last_received = Receive(
-            &data + total_received,
+            reinterpret_cast<uint8_t*>(data) + total_received,
             size - total_received,
             0
         );
@@ -132,17 +132,17 @@ int TcpSocket::ReceiveBytes(std::vector<uint8_t>& bytes)
     std::vector<uint8_t> message;
     std::size_t message_len;
 
-    if(ReceiveAll(&message_len, sizeof(message_len)) == -1);
+    if(ReceiveAll(&message_len, sizeof(message_len)) == -1)
         return -1;
-        
+    std::cout << "snt" << message_len << std::endl;
+
     message.resize(message_len);
-    if(ReceiveAll(message.data(), message_len) == -1);
+    if (ReceiveAll(message.data(), message_len) == -1)
         return -1;
     
     bytes = std::move(message);
     return message_len;
 }
-
 
 struct sockaddr_in TcpSocket::GetAddr(){
     return _addr;
