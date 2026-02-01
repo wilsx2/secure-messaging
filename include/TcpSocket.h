@@ -29,10 +29,10 @@ class TcpSocket
     int Connect();
     int Listen(int backlog);
     TcpSocket Accept();
-    int Send(const void* data, std::size_t size);
-    int SendAll(const std::vector<uint8_t>& bytes);
-    int Receive(void* data, std::size_t size);
-    int ReceiveAll(std::vector<uint8_t>& bytes);
+    int Send(const void* data, std::size_t size, int flags);
+    int SendBytes(const std::vector<uint8_t>& bytes);
+    int Receive(void* data, std::size_t size, int flags);
+    int ReceiveBytes(std::vector<uint8_t>& bytes);
 
     struct sockaddr_in GetAddr();
     int GetSockfd();

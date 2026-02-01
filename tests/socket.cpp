@@ -14,8 +14,8 @@ int main()
 
     std::string sent_message = "Peace and love on planet Earth.";
     std::vector<uint8_t> data (sent_message.begin(), sent_message.end());
-    server_to_client.SendAll(data);
-    client_to_server.ReceiveAll(data);
+    server_to_client.SendBytes(data);
+    client_to_server.ReceiveBytes(data);
     std::string received_message (data.begin(), data.end());
 
     server_to_client.Close();

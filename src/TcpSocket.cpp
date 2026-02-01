@@ -86,29 +86,29 @@ TcpSocket TcpSocket::Accept()
     return TcpSocket(new_sockfd, addr);
 }
 
-int TcpSocket::Send(const void* data, std::size_t size)
+int TcpSocket::Send(const void* data, std::size_t size, int flags)
 {
-    int success = send(_sockfd, data, size, 0); // TODO: Add flags, handle message boundaries
+    int success = send(_sockfd, data, size, flags);
     CheckSyscall(success, "Failed to write to socket");
     return success;
 }
 
-int TcpSocket::SendAll(const std::vector<uint8_t>& bytes)
+int TcpSocket::SendBytes(const std::vector<uint8_t>& bytes)
 {
     std::size_t message_len = bytes.size();
-    if (Send(&message_len, sizeof(message_len)) < 0)
+    if (Send(&message_len, sizeof(message_len), 0) < 0)
         return -1;
-    return Send(bytes.data(), message_len);
+    return Send(bytes.data(), message_len, 0);
 }
 
-int TcpSocket::Receive(void* data, std::size_t size)
+int TcpSocket::Receive(void* data, std::size_t size, int flags)
 {
-    int bytes = recv(_sockfd, data, size, 0); // TODO: Add flags, handle message boundaries
+    int bytes = recv(_sockfd, data, size, flags);
     CheckSyscall(bytes, "Failed to read from socket");
     return bytes;
 }
 
-int TcpSocket::ReceiveAll(std::vector<uint8_t>& bytes)
+int TcpSocket::ReceiveBytes(std::vector<uint8_t>& bytes)
 {
     std::vector<uint8_t> message;
     std::size_t message_len;
@@ -119,7 +119,8 @@ int TcpSocket::ReceiveAll(std::vector<uint8_t>& bytes)
     {
         std::size_t last_received = Receive(
             &message_len + total_received,
-            sizeof(message_len) - total_received
+            sizeof(message_len) - total_received,
+            0
         );
         if (last_received <= 0)
             return -1;
@@ -133,7 +134,8 @@ int TcpSocket::ReceiveAll(std::vector<uint8_t>& bytes)
     {
         std::size_t last_received = Receive(
             message.data() + total_received,
-            message_len - total_received
+            message_len - total_received,
+            0
         );
         if (last_received <= 0)
             return -1;
