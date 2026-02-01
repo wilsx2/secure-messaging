@@ -32,6 +32,7 @@ class TcpSocket
     int Send(const void* data, std::size_t size, int flags);
     int SendBytes(const std::vector<uint8_t>& bytes);
     int Receive(void* data, std::size_t size, int flags);
+    int ReceiveAll(void* data, std::size_t size);
     int ReceiveBytes(std::vector<uint8_t>& bytes);
 
     struct sockaddr_in GetAddr();

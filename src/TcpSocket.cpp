@@ -108,42 +108,39 @@ int TcpSocket::Receive(void* data, std::size_t size, int flags)
     return bytes;
 }
 
+int TcpSocket::ReceiveAll(void* data, std::size_t size)
+{
+    int total_received = 0;
+
+    while (total_received < size)
+    {
+        std::size_t last_received = Receive(
+            &data + total_received,
+            size - total_received,
+            0
+        );
+        if (last_received <= 0)
+            return -1;
+        total_received += last_received;
+    }
+
+    return total_received;
+}
+
 int TcpSocket::ReceiveBytes(std::vector<uint8_t>& bytes)
 {
     std::vector<uint8_t> message;
     std::size_t message_len;
 
-    // Parse Message Length
-    int total_received = 0;
-    while (total_received < sizeof(message_len))
-    {
-        std::size_t last_received = Receive(
-            &message_len + total_received,
-            sizeof(message_len) - total_received,
-            0
-        );
-        if (last_received <= 0)
-            return -1;
-        total_received += last_received;
-    }
-
-    // Parse Message
+    if(ReceiveAll(&message_len, sizeof(message_len)) == -1);
+        return -1;
+        
     message.resize(message_len);
-    total_received = 0;
-    while (total_received < message_len)
-    {
-        std::size_t last_received = Receive(
-            message.data() + total_received,
-            message_len - total_received,
-            0
-        );
-        if (last_received <= 0)
-            return -1;
-        total_received += last_received;
-    }
-
+    if(ReceiveAll(message.data(), message_len) == -1);
+        return -1;
+    
     bytes = std::move(message);
-    return total_received;
+    return message_len;
 }
 
 
