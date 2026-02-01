@@ -134,7 +134,6 @@ int TcpSocket::ReceiveBytes(std::vector<uint8_t>& bytes)
 
     if(ReceiveAll(&message_len, sizeof(message_len)) == -1)
         return -1;
-    std::cout << "snt" << message_len << std::endl;
 
     message.resize(message_len);
     if (ReceiveAll(message.data(), message_len) == -1)
