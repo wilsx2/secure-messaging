@@ -56,11 +56,25 @@ void Server::HandleRequest(TcpSocket client_socket)
         std::cout << "[Server] Received: " << message.ToString() << std::endl;
     }
 
-    // Echo to all clients
-    for (auto& pair : _clients)
+    // Handle message
+    HandleMessage(message);
+}
+
+void Server::HandleMessage(Message message)
+{
+    std::optional<std::string> type = message.Get("type");
+
+    if (type == "echo")
     {
-        message.Set("from", "server");
-        pair.second.Send(message.Serialize());
+        std::optional<std::string> content = message.Get("content").value();
+        if (content.has_value())
+        {
+            Message response;
+            response.Set("content", content.value());
+            std::vector<uint8_t> data = message.Serialize();
+            for (auto& pair : _clients)
+                    pair.second.Send(data);
+        }
     }
 }
 
@@ -95,36 +109,3 @@ void Server::Run()
 {
     EventLoop();
 }
-
-// void Server::HandleConnection(TcpSocket socket)
-// {
-//     SecureChannel channel (socket, HostType::Server);
-//     _clients.emplace(socket.GetSockfd(), channel);
-//     std::cout << "[Server] New connection" << std::endl;
-
-//     Message message;
-//     while (true)
-//     {
-//         std::vector<uint8_t> data;        
-//         if (channel.Receive(data) > 0 && message.Deserialize(data))
-//         {
-//             std::cout << "[Server] Received: " << message.ToString() << std::endl;
-            
-//             // Send
-//             for (auto& pair : _clients)
-//             {
-//                 message.Set("from", "server");
-//                 if (pair.first != socket.GetSockfd())
-//                     pair.second.Send(message.Serialize());
-//             }
-//         }
-//         else
-//         {
-//             break;
-//         }
-//     }
-    
-//     _clients.erase(socket.GetSockfd());
-//     socket.Close();
-//     std::cout << "[Server] Closed connection" << std::endl;
-// }

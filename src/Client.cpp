@@ -51,8 +51,7 @@ void Client::Run()
     std::thread rec ([&](){ReceiveLoop(channel);});
 
     Message message;
-    message.Set("type", "chat");
-    message.Set("from", "client");
+    message.Set("type", "echo");
     std::string arg;
     std::string input;
     while (true)
@@ -60,12 +59,11 @@ void Client::Run()
         std::getline(std::cin, input);
         std::vector<std::string> args = ParseCommandArguments(input);
 
-        if (args.size() >= 2)
+        if (args.size() >= 1)
         {
-            message.Set("to", args[0]);
             std::string content;
 
-            for (int i = 1; i < args.size(); ++i)
+            for (int i = 0; i < args.size(); ++i)
             {
                 if (content.size() > 0)
                     content += " ";

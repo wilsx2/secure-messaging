@@ -4,6 +4,7 @@
 #include "TcpSocket.h"
 #include "SecureChannel.h"
 #include "ThreadPool.h"
+#include "Message.h"
 #include <vector>
 #include <thread>
 
@@ -16,9 +17,11 @@ class Server
     int _epoll_fd;
     ThreadPool _pool;
     std::map<int, SecureChannel> _clients;
+    std::map<std::string, int> _client_names;
 
     void EstablishConnection(TcpSocket client_socket);
     void HandleRequest(TcpSocket client_socket);
+    void HandleMessage(Message message);
     void EventLoop();
 
     public:
