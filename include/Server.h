@@ -21,7 +21,7 @@ class Server
 
     void EstablishConnection(TcpSocket client_socket);
     void HandleRequest(TcpSocket client_socket);
-    void HandleMessage(Message message);
+    bool HandleMessage(Message message, TcpSocket client_socket);
     void EventLoop();
 
     public:

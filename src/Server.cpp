@@ -57,25 +57,63 @@ void Server::HandleRequest(TcpSocket client_socket)
     }
 
     // Handle message
-    HandleMessage(message);
+    bool successful = HandleMessage(message, client_socket);
+    /// Send response
+    Message response;
+    response.Set("type", "response");
+    response.Set("success", successful ? "true" : "false");
+    channel.Send(response.Serialize());
 }
 
-void Server::HandleMessage(Message message)
+bool Server::HandleMessage(Message message, TcpSocket client_socket)
 {
     std::optional<std::string> type = message.Get("type");
 
     if (type == "echo")
     {
-        std::optional<std::string> content = message.Get("content").value();
+        std::optional<std::string> content = message.Get("content");
         if (content.has_value())
         {
             Message response;
             response.Set("content", content.value());
             std::vector<uint8_t> data = message.Serialize();
             for (auto& pair : _clients)
-                    pair.second.Send(data);
+                pair.second.Send(data);
+            return true;
         }
     }
+    else if (type == "login")
+    {
+        std::optional<std::string> username = message.Get("username");
+
+        if (username.has_value())
+        {
+            _client_names.emplace(username.value(), client_socket.GetSockfd());
+            return true;
+        }
+    }
+    else if (type == "send")
+    {
+        // TODO: Check and store from
+        std::optional<std::string> to       = message.Get("to");
+        std::optional<std::string> content  = message.Get("content");
+
+        if (to.has_value() && content.has_value())
+        {
+            if (_client_names.count(to.value()) > 0)
+            {
+                int recipient_fd = _client_names.at(to.value());
+                auto recipient_pair = _clients.find(recipient_fd);
+                if (recipient_pair != _clients.end())
+                {
+                    recipient_pair->second.Send(message.Serialize());
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 void Server::EventLoop()

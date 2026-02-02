@@ -50,8 +50,7 @@ void Client::Run()
     SecureChannel channel (_socket, HostType::Client);
     std::thread rec ([&](){ReceiveLoop(channel);});
 
-    Message message;
-    message.Set("type", "echo");
+    
     std::string arg;
     std::string input;
     while (true)
@@ -59,20 +58,48 @@ void Client::Run()
         std::getline(std::cin, input);
         std::vector<std::string> args = ParseCommandArguments(input);
 
+        Message message;
         if (args.size() >= 1)
         {
-            std::string content;
+            std::string type = args[0];
+            message.Set("type", type);
 
-            for (int i = 0; i < args.size(); ++i)
+            if (type == "echo")
             {
-                if (content.size() > 0)
-                    content += " ";
-                content += args[i];
-            }
-            message.Set("content", content);
+                std::string content;
 
-            channel.Send(message.Serialize());
+                for (int i = 1; i < args.size(); ++i)
+                {
+                    if (content.size() > 0)
+                        content += " ";
+                    content += args[i];
+                }
+                message.Set("content", content);
+            }
+            else if (type == "login")
+            {
+                if (args.size() != 2)
+                    continue;
+                message.Set("username", args[1]);
+            }
+            else if (type == "send")
+            {
+                if (args.size() < 3)
+                    continue;
+                message.Set("to", args[1]);
+
+                std::string content;
+                for (int i = 2; i < args.size(); ++i)
+                {
+                    if (content.size() > 0)
+                        content += " ";
+                    content += args[i];
+                }
+                message.Set("content", content);
+            }
         }
+
+        channel.Send(message.Serialize());
     }
         
     rec.join();
