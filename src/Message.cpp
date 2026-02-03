@@ -2,14 +2,14 @@
 #include <cstring>
 #include <iostream>
 
-std::optional<std::string> Message::Get(const std::string& key)
+std::optional<std::string> Message::Get(const std::string& key) const
 {
     auto it = _key_values.find(key);
     if (it == _key_values.end())
         return std::nullopt;
     return it->second;
 }
-bool Message::Has(const std::string& key)
+bool Message::Has(const std::string& key) const
 {
     return _key_values.count(key);
 }

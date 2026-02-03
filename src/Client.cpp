@@ -3,6 +3,7 @@
 #include "SecureChannel.h"
 #include "Message.h"
 #include <thread>
+#include <format>
 
 Client::Client()
     : _socket(PORT, INADDR_LOOPBACK)
@@ -41,8 +42,40 @@ void Client::ReceiveLoop(SecureChannel& channel)
         if (channel.Receive(data) > 0 && message.Deserialize(data))
         {
             std::cout << "[Client] Received: " << message.ToString() << std::endl;
+            std::optional<std::string> output = HandleMessage(message);
+            if (output.has_value())
+            {
+
+                std::cout << output.value() << std::endl;
+            }
         }
     }
+}
+
+std::optional<std::string> Client::HandleMessage(const Message& message)
+{
+    std::string type = message.Get("type").value_or("");
+
+    if (type == "send") return HandleChatMessage(message);
+
+    return std::nullopt;
+}
+
+std::optional<std::string> Client::HandleChatMessage(const Message& message)
+{
+    if (!message.Has("type") || !message.Has("to") || !message.Has("from") || !message.Has("content"))
+        return std::nullopt;
+
+    std::string type, to, from, content;
+    type = message.Get("type").value();
+    to = message.Get("to").value();
+    from = message.Get("from").value();
+    content = message.Get("content").value();
+    if (type != "send"/*  || to != me */)
+        return std::nullopt;
+    
+    return std::format("[{}]> {}", from, content);
+
 }
 
 void Client::SendLoop(SecureChannel& channel)

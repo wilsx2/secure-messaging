@@ -14,8 +14,8 @@ class Message
 
     public:
     Message() = default;
-    std::optional<std::string> Get(const std::string& key);
-    bool Has(const std::string& key);
+    std::optional<std::string> Get(const std::string& key) const;
+    bool Has(const std::string& key) const;
     void Set(const std::string& key, const std::string& value);
     std::vector<uint8_t> Serialize();
     bool Deserialize(const std::vector<uint8_t>& data);
