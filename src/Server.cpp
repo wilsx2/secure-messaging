@@ -92,7 +92,7 @@ bool Server::HandleMessage(Message message, TcpSocket client_socket)
             return true;
         }
     }
-    else if (type == "send")
+    else if (type == "chat")
     {
         // TODO: Check and store from
         std::optional<std::string> to       = message.Get("to");

@@ -71,7 +71,7 @@ std::optional<std::string> Client::HandleChatMessage(const Message& message)
     to = message.Get("to").value();
     from = message.Get("from").value();
     content = message.Get("content").value();
-    if (type != "send"/*  || to != me */)
+    if (type != "chat"/*  || to != me */)
         return std::nullopt;
     
     return std::format("[{}]> {}", from, content);
@@ -127,7 +127,7 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
         return std::nullopt;
     
     Message message;
-    message.Set("type", "send");
+    message.Set("type", "chat");
     message.Set("to", args[1]);
 
     std::string content;
