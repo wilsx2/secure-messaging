@@ -51,43 +51,46 @@ std::optional<Message> Client::BuildMessage(const std::vector<std::string>& args
     if (args.size() >= 1)
     {
         std::string type = args[0];
-        message.Set("type", type);
 
-        if (type == "echo")
-        {
-            std::string content;
-
-            for (int i = 1; i < args.size(); ++i)
-            {
-                if (content.size() > 0)
-                    content += " ";
-                content += args[i];
-            }
-            message.Set("content", content);
-        }
-        else if (type == "login")
-        {
-            if (args.size() != 2)
-                return std::nullopt;
-            message.Set("username", args[1]);
-        }
-        else if (type == "send")
-        {
-            if (args.size() < 3)
-                return std::nullopt;
-            message.Set("to", args[1]);
-
-            std::string content;
-            for (int i = 2; i < args.size(); ++i)
-            {
-                if (content.size() > 0)
-                    content += " ";
-                content += args[i];
-            }
-            message.Set("content", content);
-        }
+             if (type == "login")       return BuildLoginMessage(args);
+        // else if (type == "register")    return BuildRegistrationMessage(args);
+        // else if (type == "list")        return BuildListActiveMessage(args);
+        else if (type == "send")        return BuildChatMessage(args);
     }
 
+    return message;
+}
+
+std::optional<Message> Client::BuildLoginMessage(const std::vector<std::string>& args)
+{
+    if (args.size() != 2 || args[0] != "login")
+        return std::nullopt;
+
+    Message message;
+    message.Set("type", "login");
+    message.Set("username", args[1]);
+
+    return message;
+}
+// std::optional<Message> Client::BuildRegistrationMessage(const std::vector<std::string>& args);
+// std::optional<Message> Client::BuildListActiveMessage(const std::vector<std::string>& args);
+std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& args)
+{
+    if (args.size() < 3 || args[0] != "send")
+        return std::nullopt;
+    
+    Message message;
+    message.Set("type", "send");
+    message.Set("to", args[1]);
+
+    std::string content;
+    for (int i = 2; i < args.size(); ++i)
+    {
+        if (content.size() > 0)
+            content += " ";
+        content += args[i];
+    }
+    message.Set("content", content);
     return message;
 }
 

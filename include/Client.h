@@ -11,7 +11,13 @@ class Client
     TcpSocket _socket;
     void ReceiveLoop(SecureChannel& channel);
     std::vector<std::string> ParseCommandArguments(const std::string& str);
+    
     std::optional<Message> BuildMessage(const std::vector<std::string>& args);
+    std::optional<Message> BuildLoginMessage(const std::vector<std::string>& args);
+    std::optional<Message> BuildRegistrationMessage(const std::vector<std::string>& args);
+    std::optional<Message> BuildListActiveMessage(const std::vector<std::string>& args);
+    std::optional<Message> BuildChatMessage(const std::vector<std::string>& args);
+
 
     public:
     Client();
