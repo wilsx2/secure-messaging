@@ -22,6 +22,11 @@ class Server
     void EstablishConnection(TcpSocket client_socket);
     void HandleRequest(TcpSocket client_socket);
     bool HandleMessage(Message message, TcpSocket client_socket);
+    bool HandleLoginMessage(Message message, TcpSocket client_socket);
+    // bool HandleRegistrationMessage(Message message, TcpSocket client_socket);
+    // bool HandleListActiveMessage(Message message, TcpSocket client_socket);
+    bool HandleChatMessage(Message message, TcpSocket client_socket);
+
     void EventLoop();
 
     public:
