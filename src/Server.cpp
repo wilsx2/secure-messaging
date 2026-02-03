@@ -83,6 +83,14 @@ bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
     std::string username = message.Get("username").value();
     _client_names.emplace(username, client_socket.GetSockfd());
 
+    Message response;
+    response.Set("type", "logged in");
+    response.Set("username", username);
+    auto recipient_pair = _clients.find(client_socket.GetSockfd());
+    if (recipient_pair == _clients.end())
+        return false;
+    recipient_pair->second.Send(response.Serialize());
+
     return true;
 }
 

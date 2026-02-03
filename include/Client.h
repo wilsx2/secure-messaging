@@ -4,14 +4,20 @@
 #include "SecureChannel.h"
 #include "TcpSocket.h"
 #include "Message.h"
+#include <optional>
 
 class Client
 {
     private:
     TcpSocket _socket;
+    std::optional<std::string> _username;
     void ReceiveLoop(SecureChannel& channel);
     std::optional<std::string> HandleMessage(const Message& message);
+    std::optional<std::string> HandleLoggedInMessage(const Message& message);
+    // std::optional<std::string> HandleRegisteredMessage(const Message& message);
+    // std::optional<std::string> HandleListMessage(const Message& message);
     std::optional<std::string> HandleChatMessage(const Message& message);
+    
 
     void SendLoop(SecureChannel& channel);
     std::vector<std::string> ParseCommandArguments(const std::string& str);

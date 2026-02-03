@@ -54,28 +54,35 @@ void Client::ReceiveLoop(SecureChannel& channel)
 
 std::optional<std::string> Client::HandleMessage(const Message& message)
 {
-    std::string type = message.Get("type").value_or("");
+    std::optional<std::string> type = message.Get("type");
 
-    if (type == "send") return HandleChatMessage(message);
+         if (type == "logged in")   return HandleLoggedInMessage(message);
+    else if (type == "chat")        return HandleChatMessage(message);
+    
 
     return std::nullopt;
 }
 
+std::optional<std::string> Client::HandleLoggedInMessage(const Message& message)
+{
+    if (message.Get("type") != "logged in" || !message.Has("username"))
+        return std::nullopt;
+
+    std::string username;
+    username = message.Get("username").value();
+    _username = username;    
+    return std::format("Logged in successfully as {}", _username.value());
+}
+
 std::optional<std::string> Client::HandleChatMessage(const Message& message)
 {
-    if (!message.Has("type") || !message.Has("to") || !message.Has("from") || !message.Has("content"))
+    if (message.Get("type") != "chat" || message.Get("to") != _username || !message.Has("from") || !message.Has("content"))
         return std::nullopt;
 
-    std::string type, to, from, content;
-    type = message.Get("type").value();
-    to = message.Get("to").value();
+    std::string from, content;
     from = message.Get("from").value();
     content = message.Get("content").value();
-    if (type != "chat"/*  || to != me */)
-        return std::nullopt;
-    
     return std::format("[{}]> {}", from, content);
-
 }
 
 void Client::SendLoop(SecureChannel& channel)
@@ -123,7 +130,7 @@ std::optional<Message> Client::BuildLoginMessage(const std::vector<std::string>&
 // std::optional<Message> Client::BuildListActiveMessage(const std::vector<std::string>& args);
 std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& args)
 {
-    if (args.size() < 3 || args[0] != "send")
+    if (args.size() < 3 || args[0] != "send" || !_username.has_value())
         return std::nullopt;
     
     Message message;
@@ -138,6 +145,8 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
         content += args[i];
     }
     message.Set("content", content);
+
+    message.Set("from", _username.value());
     return message;
 }
 
