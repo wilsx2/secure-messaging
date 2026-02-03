@@ -120,9 +120,10 @@ std::optional<Message> Client::BuildLoginMessage(const std::vector<std::string>&
     if (args.size() != 2 || args[0] != "login")
         return std::nullopt;
 
-    Message message;
-    message.Set("type", "login");
-    message.Set("username", args[1]);
+    Message message {
+        {"type", "login"},
+        {"username", args[1]}
+    };
 
     return message;
 }
@@ -133,9 +134,12 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
     if (args.size() < 3 || args[0] != "send" || !_username.has_value())
         return std::nullopt;
     
-    Message message;
-    message.Set("type", "chat");
-    message.Set("to", args[1]);
+    Message message {
+        {"type", "chat"},
+        {"from", _username.value()},
+        {"to", args[1]},
+        {"content", ""}
+    };
 
     std::string content;
     for (int i = 2; i < args.size(); ++i)
@@ -146,7 +150,6 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
     }
     message.Set("content", content);
 
-    message.Set("from", _username.value());
     return message;
 }
 

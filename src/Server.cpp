@@ -83,7 +83,11 @@ bool Server::HandleMessage(Message message, TcpSocket client_socket)
     else if (type == "chat")    return HandleChatMessage(message, client_socket);
 
 
-    // TODO: Respond with error
+    Message error {
+        {"type", "error"},
+        {"content", "Message of unrecognized or missing type."}
+    };
+    SendMessage(message, client_socket.GetSockfd());
     return false;
 }
 
