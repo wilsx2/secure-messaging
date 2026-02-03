@@ -77,36 +77,37 @@ bool Server::HandleMessage(Message message, TcpSocket client_socket)
 
 bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
 {
-    std::optional<std::string> username = message.Get("username");
+    if (message.Get("type") != "login" || !message.Has("username"))
+        return false;
 
-    if (username.has_value())
-    {
-        _client_names.emplace(username.value(), client_socket.GetSockfd());
-        return true;
-    }
-    return false;
+    std::string username = message.Get("username").value();
+    _client_names.emplace(username, client_socket.GetSockfd());
+
+    return true;
 }
 
 bool Server::HandleChatMessage(Message message, TcpSocket client_socket)
 {
-    // TODO: Check and store from
-    std::optional<std::string> to       = message.Get("to");
-    std::optional<std::string> content  = message.Get("content");
+    if (message.Get("type") != "chat" || !message.Has("to") || !message.Has("content"))
+        return false;
 
-    if (to.has_value() && content.has_value())
-    {
-        if (_client_names.count(to.value()) > 0)
-        {
-            int recipient_fd = _client_names.at(to.value());
-            auto recipient_pair = _clients.find(recipient_fd);
-            if (recipient_pair != _clients.end())
-            {
-                recipient_pair->second.Send(message.Serialize());
-                return true;
-            }
-        }
-    }
-    return false;
+    std::string to = message.Get("to").value();
+
+    // Check recipient is logged in
+    if (_client_names.count(to) == 0)
+        return false;
+
+    // Check recipient socket is connected
+    int recipient_fd = _client_names.at(to);
+    auto recipient_pair = _clients.find(recipient_fd);
+    if (recipient_pair == _clients.end())
+        return false;
+
+    // TODO: Check sender in the message matches the name of the sender connected to the client socket
+
+    // Forward chat message
+    recipient_pair->second.Send(message.Serialize());
+    return true;
 }
 
 void Server::EventLoop()
