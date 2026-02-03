@@ -10,6 +10,7 @@ class Client
     private:
     TcpSocket _socket;
     void ReceiveLoop(SecureChannel& channel);
+    void SendLoop(SecureChannel& channel);
     std::vector<std::string> ParseCommandArguments(const std::string& str);
     
     std::optional<Message> BuildMessage(const std::vector<std::string>& args);

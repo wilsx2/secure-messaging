@@ -45,6 +45,20 @@ void Client::ReceiveLoop(SecureChannel& channel)
     }
 }
 
+void Client::SendLoop(SecureChannel& channel)
+{
+    std::string arg;
+    std::string input;
+    while (true)
+    {
+        std::getline(std::cin, input);
+        std::vector<std::string> args = ParseCommandArguments(input);
+        std::optional<Message> message = BuildMessage(args);
+        if (message.has_value())
+            channel.Send(message.value().Serialize());
+    }
+}
+
 std::optional<Message> Client::BuildMessage(const std::vector<std::string>& args)
 {
     Message message;
@@ -98,18 +112,6 @@ void Client::Run()
 {
     SecureChannel channel (_socket, HostType::Client);
     std::thread rec ([&](){ReceiveLoop(channel);});
-
-    
-    std::string arg;
-    std::string input;
-    while (true)
-    {
-        std::getline(std::cin, input);
-        std::vector<std::string> args = ParseCommandArguments(input);
-        std::optional<Message> message = BuildMessage(args);
-        if (message.has_value())
-            channel.Send(message.value().Serialize());
-    }
-        
+    SendLoop(channel);        
     rec.join();
 }
