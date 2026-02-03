@@ -37,6 +37,17 @@ void Server::EstablishConnection(TcpSocket client_socket)
     _clients.emplace(client_socket.GetSockfd(), channel);
 }
 
+bool Server::SendMessage(Message message, int client)
+{
+    auto pair = _clients.find(client);
+    return pair != _clients.end() && pair->second.Send(message.Serialize()) != -1;
+}
+
+bool Server::SendMessage(Message message, std::string client)
+{
+    return _client_names.count(client) != 0 && SendMessage(message, _client_names.at(client));   
+}
+
 void Server::HandleRequest(TcpSocket client_socket)
 {
     std::cout << "Request received" << std::endl;
@@ -54,15 +65,14 @@ void Server::HandleRequest(TcpSocket client_socket)
     if (channel.Receive(data) > 0 && message.Deserialize(data))
     {
         std::cout << "[Server] Received: " << message.ToString() << std::endl;
-    }
 
-    // Handle message
-    bool successful = HandleMessage(message, client_socket);
-    /// Send response
-    Message response;
-    response.Set("type", "response");
-    response.Set("success", successful ? "true" : "false");
-    channel.Send(response.Serialize());
+        // Handle message
+        HandleMessage(message, client_socket);
+    }
+    else
+    {
+        // TODO: Respond with error of malformed message / data
+    }
 }
 
 bool Server::HandleMessage(Message message, TcpSocket client_socket)
@@ -72,6 +82,8 @@ bool Server::HandleMessage(Message message, TcpSocket client_socket)
          if (type == "login")   return HandleLoginMessage(message, client_socket);
     else if (type == "chat")    return HandleChatMessage(message, client_socket);
 
+
+    // TODO: Respond with error
     return false;
 }
 
@@ -83,39 +95,15 @@ bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
     std::string username = message.Get("username").value();
     _client_names.emplace(username, client_socket.GetSockfd());
 
-    Message response;
-    response.Set("type", "logged in");
-    response.Set("username", username);
-    auto recipient_pair = _clients.find(client_socket.GetSockfd());
-    if (recipient_pair == _clients.end())
-        return false;
-    recipient_pair->second.Send(response.Serialize());
-
-    return true;
+    message.Set("type", "logged in");
+    return SendMessage(message, client_socket.GetSockfd());
 }
 
 bool Server::HandleChatMessage(Message message, TcpSocket client_socket)
 {
     if (message.Get("type") != "chat" || !message.Has("to") || !message.Has("content"))
         return false;
-
-    std::string to = message.Get("to").value();
-
-    // Check recipient is logged in
-    if (_client_names.count(to) == 0)
-        return false;
-
-    // Check recipient socket is connected
-    int recipient_fd = _client_names.at(to);
-    auto recipient_pair = _clients.find(recipient_fd);
-    if (recipient_pair == _clients.end())
-        return false;
-
-    // TODO: Check sender in the message matches the name of the sender connected to the client socket
-
-    // Forward chat message
-    recipient_pair->second.Send(message.Serialize());
-    return true;
+    return SendMessage(message, message.Get("to").value());
 }
 
 void Server::EventLoop()
