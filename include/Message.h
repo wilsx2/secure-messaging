@@ -2,6 +2,7 @@
 #define MESSAGE_H
 
 #include <cstdint>
+#include <initializer_list>
 #include <vector>
 #include <optional>
 #include <string>
@@ -14,6 +15,7 @@ class Message
 
     public:
     Message() = default;
+    Message(std::initializer_list<std::pair<std::string, std::string>> list);
     std::optional<std::string> Get(const std::string& key) const;
     bool Has(const std::string& key) const;
     void Set(const std::string& key, const std::string& value);

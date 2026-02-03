@@ -2,6 +2,14 @@
 #include <cstring>
 #include <iostream>
 
+Message::Message(std::initializer_list<std::pair<std::string, std::string>> list)
+{
+    for (auto& pair : list)
+    {
+        _key_values.emplace(pair);
+    }
+}
+
 std::optional<std::string> Message::Get(const std::string& key) const
 {
     auto it = _key_values.find(key);
