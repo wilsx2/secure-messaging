@@ -45,6 +45,52 @@ void Client::ReceiveLoop(SecureChannel& channel)
     }
 }
 
+std::optional<Message> Client::BuildMessage(const std::vector<std::string>& args)
+{
+    Message message;
+    if (args.size() >= 1)
+    {
+        std::string type = args[0];
+        message.Set("type", type);
+
+        if (type == "echo")
+        {
+            std::string content;
+
+            for (int i = 1; i < args.size(); ++i)
+            {
+                if (content.size() > 0)
+                    content += " ";
+                content += args[i];
+            }
+            message.Set("content", content);
+        }
+        else if (type == "login")
+        {
+            if (args.size() != 2)
+                return std::nullopt;
+            message.Set("username", args[1]);
+        }
+        else if (type == "send")
+        {
+            if (args.size() < 3)
+                return std::nullopt;
+            message.Set("to", args[1]);
+
+            std::string content;
+            for (int i = 2; i < args.size(); ++i)
+            {
+                if (content.size() > 0)
+                    content += " ";
+                content += args[i];
+            }
+            message.Set("content", content);
+        }
+    }
+
+    return message;
+}
+
 void Client::Run()
 {
     SecureChannel channel (_socket, HostType::Client);
@@ -57,49 +103,9 @@ void Client::Run()
     {
         std::getline(std::cin, input);
         std::vector<std::string> args = ParseCommandArguments(input);
-
-        Message message;
-        if (args.size() >= 1)
-        {
-            std::string type = args[0];
-            message.Set("type", type);
-
-            if (type == "echo")
-            {
-                std::string content;
-
-                for (int i = 1; i < args.size(); ++i)
-                {
-                    if (content.size() > 0)
-                        content += " ";
-                    content += args[i];
-                }
-                message.Set("content", content);
-            }
-            else if (type == "login")
-            {
-                if (args.size() != 2)
-                    continue;
-                message.Set("username", args[1]);
-            }
-            else if (type == "send")
-            {
-                if (args.size() < 3)
-                    continue;
-                message.Set("to", args[1]);
-
-                std::string content;
-                for (int i = 2; i < args.size(); ++i)
-                {
-                    if (content.size() > 0)
-                        content += " ";
-                    content += args[i];
-                }
-                message.Set("content", content);
-            }
-        }
-
-        channel.Send(message.Serialize());
+        std::optional<Message> message = BuildMessage(args);
+        if (message.has_value())
+            channel.Send(message.value().Serialize());
     }
         
     rec.join();
