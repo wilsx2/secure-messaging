@@ -62,16 +62,23 @@ void Server::HandleRequest(TcpSocket client_socket)
     SecureChannel& channel = client_pair->second;
     Message message;
     std::vector<uint8_t> data;        
-    if (channel.Receive(data) > 0 && message.Deserialize(data))
+    if (channel.Receive(data) > 0)
     {
-        std::cout << "[Server] Received: " << message.ToString() << std::endl;
-
-        // Handle message
-        HandleMessage(message, client_socket);
-    }
-    else
-    {
-        // TODO: Respond with error of malformed message / data
+        if (message.Deserialize(data))
+        {
+            std::cout << "[Server] Received: " << message.ToString() << std::endl;
+            HandleMessage(message, client_socket);
+        }
+        else
+        {
+            SendMessage(
+                {
+                    {"type", "error"},
+                    {"content", "Message received failed to deserialize."}
+                },
+                client_socket.GetSockfd()
+            );
+        }
     }
 }
 
@@ -82,19 +89,29 @@ bool Server::HandleMessage(Message message, TcpSocket client_socket)
          if (type == "login")   return HandleLoginMessage(message, client_socket);
     else if (type == "chat")    return HandleChatMessage(message, client_socket);
 
-
-    Message error {
-        {"type", "error"},
-        {"content", "Message of unrecognized or missing type."}
-    };
-    SendMessage(message, client_socket.GetSockfd());
+    SendMessage(
+        {
+            {"type", "error"},
+            {"content", "Message of unrecognized or missing type."}
+        },
+        client_socket.GetSockfd()
+    );
     return false;
 }
 
 bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
 {
-    if (message.Get("type") != "login" || !message.Has("username"))
+    if (!message.Has("username"))
+    {
+        SendMessage(
+            {
+                {"type", "error"},
+                {"content", "Login message is missing username."}
+            },
+            client_socket.GetSockfd()
+        );
         return false;
+    }
 
     std::string username = message.Get("username").value();
     _client_names.emplace(username, client_socket.GetSockfd());
@@ -105,8 +122,17 @@ bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
 
 bool Server::HandleChatMessage(Message message, TcpSocket client_socket)
 {
-    if (message.Get("type") != "chat" || !message.Has("to") || !message.Has("content"))
+    if (!message.Has("to") || !message.Has("content"))
+    {
+        SendMessage(
+            {
+                {"type", "error"},
+                {"content", "Chat message is missing username."}
+            },
+            client_socket.GetSockfd()
+        );
         return false;
+    }
     return SendMessage(message, message.Get("to").value());
 }
 
