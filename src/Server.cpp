@@ -44,15 +44,27 @@ void Server::CloseConnection(TcpSocket client_socket)
     client_socket.Close();
 }
 
+
+int Server::GetClient(std::string client_name)
+{
+    return _client_names.count(client_name) != 0 ? _client_names[client_name] : -1;
+}
+
 bool Server::SendMessage(Message message, int client)
 {
     auto pair = _clients.find(client);
     return pair != _clients.end() && pair->second.Send(message.Serialize()) != -1;
 }
 
-bool Server::SendMessage(Message message, std::string client)
+
+bool Server::SendErrorMessage(std::string content, int client)
 {
-    return _client_names.count(client) != 0 && SendMessage(message, _client_names.at(client));   
+    return SendMessage({{"type", "error"}, {"content", content}}, client);
+}
+
+bool Server::SendSuccessMessage(std::string content, int client)
+{
+    return SendMessage({{"type", "success"}, {"content", content}}, client);
 }
 
 void Server::HandleRequest(TcpSocket client_socket)
@@ -78,13 +90,7 @@ void Server::HandleRequest(TcpSocket client_socket)
         }
         else
         {
-            SendMessage(
-                {
-                    {"type", "error"},
-                    {"content", "Message received failed to deserialize."}
-                },
-                client_socket.GetSockfd()
-            );
+            SendErrorMessage("Message received failed to deserialize.", client_socket.GetSockfd());
         }
     }
     else
@@ -100,13 +106,7 @@ bool Server::HandleMessage(Message message, TcpSocket client_socket)
          if (type == "login")   return HandleLoginMessage(message, client_socket);
     else if (type == "chat")    return HandleChatMessage(message, client_socket);
 
-    SendMessage(
-        {
-            {"type", "error"},
-            {"content", "Message of unrecognized or missing type."}
-        },
-        client_socket.GetSockfd()
-    );
+    SendErrorMessage("Message of unrecognized or missing type.", client_socket.GetSockfd());
     return false;
 }
 
@@ -114,13 +114,7 @@ bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
 {
     if (!message.Has("username"))
     {
-        SendMessage(
-            {
-                {"type", "error"},
-                {"content", "Login message is missing username."}
-            },
-            client_socket.GetSockfd()
-        );
+        SendErrorMessage("Login message is missing username.", client_socket.GetSockfd());
         return false;
     }
 
@@ -135,16 +129,13 @@ bool Server::HandleChatMessage(Message message, TcpSocket client_socket)
 {
     if (!message.Has("to") || !message.Has("content"))
     {
-        SendMessage(
-            {
-                {"type", "error"},
-                {"content", "Chat message is missing username."}
-            },
-            client_socket.GetSockfd()
-        );
+        SendErrorMessage("Chat message is missing username.", client_socket.GetSockfd());
         return false;
     }
-    return SendMessage(message, message.Get("to").value());
+    int client_fd = GetClient(message.Get("to").value());
+    if (client_fd == -1)
+        return false;
+    return SendMessage(message, client_fd);
 }
 
 void Server::EventLoop()

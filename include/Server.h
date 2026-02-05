@@ -18,9 +18,12 @@ class Server
     ThreadPool _pool;
     std::map<int, SecureChannel> _clients;
     std::map<std::string, int> _client_names;
+
+    int GetClient(std::string client_name);
     
     bool SendMessage(Message message, int client);
-    bool SendMessage(Message message, std::string client);
+    bool SendErrorMessage(std::string content, int client);
+    bool SendSuccessMessage(std::string content, int client);
 
     void EstablishConnection(TcpSocket client_socket);
     void CloseConnection(TcpSocket client_socket);
