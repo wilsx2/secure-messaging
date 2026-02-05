@@ -76,7 +76,7 @@ std::optional<std::string> Client::HandleLoggedInMessage(const Message& message)
 
 std::optional<std::string> Client::HandleChatMessage(const Message& message)
 {
-    if (message.Get("type") != "chat" || message.Get("to") != _username || !message.Has("from") || !message.Has("content"))
+    if (message.Get("type") != "chat" || message.Get("to") != _username || !message.HasAll("from", "content"))
         return std::nullopt;
 
     std::string from, content;

@@ -17,11 +17,19 @@ class Message
     Message() = default;
     Message(std::initializer_list<std::pair<std::string, std::string>> list);
     std::optional<std::string> Get(const std::string& key) const;
+    template<typename... Args>
+    bool HasAll(const Args&... keys) const;
     bool Has(const std::string& key) const;
     void Set(const std::string& key, const std::string& value);
     std::vector<uint8_t> Serialize();
     bool Deserialize(const std::vector<uint8_t>& data);
     std::string ToString();
 };
+
+template<typename... Args>
+bool Message::HasAll(const Args&... keys) const
+{
+    return (Has(keys) && ...);
+}
 
 #endif

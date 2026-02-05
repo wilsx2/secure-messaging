@@ -127,7 +127,7 @@ bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
 
 bool Server::HandleChatMessage(Message message, TcpSocket client_socket)
 {
-    if (!message.Has("to") || !message.Has("content"))
+    if (!message.HasAll("to", "content"))
     {
         SendErrorMessage("Chat message is missing username.", client_socket.GetSockfd());
         return false;
