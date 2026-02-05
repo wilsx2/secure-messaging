@@ -14,8 +14,8 @@ Server::Server()
 
     epoll_event ev{};
     ev.events = EPOLLIN;
-    ev.data.fd = _socket.GetSockfd();
-    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _socket.GetSockfd(), &ev); // TODO: Handle errors
+    ev.data.fd = _socket.GetFd();
+    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _socket.GetFd(), &ev); // TODO: Handle errors
 }
 Server::~Server()
 {
@@ -29,42 +29,34 @@ void Server::EstablishConnection(TcpSocket client_socket)
     // Add to epoll
     epoll_event ev {};
     ev.events = EPOLLIN | EPOLLET;
-    ev.data.fd = client_socket.GetSockfd();
-    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_socket.GetSockfd(), &ev); // TODO: Handle errors
+    ev.data.fd = client_socket.GetFd();
+    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_socket.GetFd(), &ev); // TODO: Handle errors
     
     // Create Secure Channel
     SecureChannel channel (client_socket, HostType::Server);
-    _clients.emplace(client_socket.GetSockfd(), channel);
+    _sessions.emplace(client_socket.GetFd(), channel); // TODO: Move semantics
 }
 
 void Server::CloseConnection(TcpSocket client_socket)
 {
     std::cout << "Closing connection" << std::endl;
-    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_socket.GetSockfd(), NULL);
+    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_socket.GetFd(), NULL);
     client_socket.Close();
 }
 
-
-int Server::GetClient(std::string client_name)
+bool Server::SendMessage(SecureChannel& channel, Message message)
 {
-    return _client_names.count(client_name) != 0 ? _client_names[client_name] : -1;
+    return channel.Send(message.Serialize()) != -1;
 }
 
-bool Server::SendMessage(Message message, int client)
+bool Server::SendErrorMessage(SecureChannel& channel, std::string content)
 {
-    auto pair = _clients.find(client);
-    return pair != _clients.end() && pair->second.Send(message.Serialize()) != -1;
+    return SendMessage(channel, {{"type", "error"}, {"content", content}});
 }
 
-
-bool Server::SendErrorMessage(std::string content, int client)
+bool Server::SendSuccessMessage(SecureChannel& channel, std::string content)
 {
-    return SendMessage({{"type", "error"}, {"content", content}}, client);
-}
-
-bool Server::SendSuccessMessage(std::string content, int client)
-{
-    return SendMessage({{"type", "success"}, {"content", content}}, client);
+    return SendMessage(channel, {{"type", "success"}, {"content", content}});
 }
 
 void Server::HandleRequest(TcpSocket client_socket)
@@ -72,13 +64,14 @@ void Server::HandleRequest(TcpSocket client_socket)
     std::cout << "Request received" << std::endl;
 
     // Check for secure channel between server and client
-    int client_fd = client_socket.GetSockfd();
-    auto client_pair = _clients.find(client_fd);
-    if (client_pair == _clients.end())
+    auto it = _sessions.find(client_socket.GetFd());
+    if (it == _sessions.end())
+        //TODO: Error handling
         return;
 
     // Receive message across secure channel
-    SecureChannel& channel = client_pair->second;
+    SecureChannel& session = it->second;
+    SecureChannel& channel = session;
     Message message;
     std::vector<uint8_t> data;        
     if (channel.Receive(data) > 0)
@@ -86,11 +79,11 @@ void Server::HandleRequest(TcpSocket client_socket)
         if (message.Deserialize(data))
         {
             std::cout << "[Server] Received: " << message.ToString() << std::endl;
-            HandleMessage(message, client_socket);
+            HandleMessage(session, message);
         }
         else
         {
-            SendErrorMessage("Message received failed to deserialize.", client_socket.GetSockfd());
+            SendErrorMessage(session, "Message received failed to deserialize.");
         }
     }
     else
@@ -99,43 +92,49 @@ void Server::HandleRequest(TcpSocket client_socket)
     }
 }
 
-bool Server::HandleMessage(Message message, TcpSocket client_socket)
+bool Server::HandleMessage(SecureChannel& session, Message message)
 {
     std::optional<std::string> type = message.Get("type");
 
-         if (type == "login")   return HandleLoginMessage(message, client_socket);
-    else if (type == "chat")    return HandleChatMessage(message, client_socket);
+         if (type == "login")   return HandleLoginMessage(session, message);
+    else if (type == "chat")    return HandleChatMessage(session, message);
 
-    SendErrorMessage("Message of unrecognized or missing type.", client_socket.GetSockfd());
+    SendErrorMessage(session, "Message of unrecognized or missing type.");
     return false;
 }
 
-bool Server::HandleLoginMessage(Message message, TcpSocket client_socket)
+bool Server::HandleLoginMessage(SecureChannel& session, Message message)
 {
     if (!message.Has("username"))
     {
-        SendErrorMessage("Login message is missing username.", client_socket.GetSockfd());
+        SendErrorMessage(session, "Login message is missing username.");
         return false;
     }
 
     std::string username = message.Get("username").value();
-    _client_names.emplace(username, client_socket.GetSockfd());
+    _user_to_socket.emplace(username, session.GetSocket().GetFd());
 
     message.Set("type", "logged in");
-    return SendMessage(message, client_socket.GetSockfd());
+    return SendMessage(session, message);
 }
 
-bool Server::HandleChatMessage(Message message, TcpSocket client_socket)
+bool Server::HandleChatMessage(SecureChannel& session, Message message)
 {
     if (!message.HasAll("to", "content"))
     {
-        SendErrorMessage("Chat message is missing username.", client_socket.GetSockfd());
+        SendErrorMessage(session, "Chat message is missing username.");
         return false;
     }
-    int client_fd = GetClient(message.Get("to").value());
-    if (client_fd == -1)
+    const std::string& recipient = message.Get("to").value();
+    auto user_it = _user_to_socket.find(recipient);
+    if (user_it == _user_to_socket.end())
         return false;
-    return SendMessage(message, client_fd);
+
+    auto session_it = _sessions.find(user_it->second);
+    if (session_it == _sessions.end())
+        return false;
+
+    return SendMessage(session_it->second, message);
 }
 
 void Server::EventLoop()
@@ -151,10 +150,10 @@ void Server::EventLoop()
         for (int i = 0; i < num_events; ++i)
         {
             std::cout << (events[i].events) << std::endl;
-            if (events[i].data.fd == _socket.GetSockfd())
+            if (events[i].data.fd == _socket.GetFd())
             { // Accept new connection
                 TcpSocket client_socket = _socket.Accept();
-                if (client_socket.GetSockfd() == -1)
+                if (client_socket.GetFd() == -1)
                     continue;
                 EstablishConnection(client_socket);
             }

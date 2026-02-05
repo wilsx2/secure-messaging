@@ -37,7 +37,7 @@ class TcpSocket
     int ReceiveBytes(std::vector<uint8_t>& bytes);
 
     struct sockaddr_in GetAddr();
-    int GetSockfd();
+    int GetFd();
 };
 
 #endif

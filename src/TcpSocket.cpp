@@ -146,6 +146,6 @@ int TcpSocket::ReceiveBytes(std::vector<uint8_t>& bytes)
 struct sockaddr_in TcpSocket::GetAddr(){
     return _addr;
 }
-int TcpSocket::GetSockfd(){
+int TcpSocket::GetFd(){
     return _sockfd;
 }

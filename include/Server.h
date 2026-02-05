@@ -7,6 +7,7 @@
 #include "Message.h"
 #include <vector>
 #include <thread>
+#include <optional>
 
 class Server
 {
@@ -16,23 +17,19 @@ class Server
     TcpSocket _socket;
     int _epoll_fd;
     ThreadPool _pool;
-    std::map<int, SecureChannel> _clients;
-    std::map<std::string, int> _client_names;
-
-    int GetClient(std::string client_name);
+    std::map<int, SecureChannel> _sessions;
+    std::map<std::string, int> _user_to_socket;
     
-    bool SendMessage(Message message, int client);
-    bool SendErrorMessage(std::string content, int client);
-    bool SendSuccessMessage(std::string content, int client);
+    bool SendMessage(SecureChannel& channel, Message message);
+    bool SendErrorMessage(SecureChannel& channel, std::string content);
+    bool SendSuccessMessage(SecureChannel& channel, std::string content);
 
     void EstablishConnection(TcpSocket client_socket);
     void CloseConnection(TcpSocket client_socket);
     void HandleRequest(TcpSocket client_socket);
-    bool HandleMessage(Message message, TcpSocket client_socket);
-    bool HandleLoginMessage(Message message, TcpSocket client_socket);
-    // bool HandleRegistrationMessage(Message message, TcpSocket client_socket);
-    // bool HandleListActiveMessage(Message message, TcpSocket client_socket);
-    bool HandleChatMessage(Message message, TcpSocket client_socket);
+    bool HandleMessage(SecureChannel& session, Message message);
+    bool HandleLoginMessage(SecureChannel& session, Message message);
+    bool HandleChatMessage(SecureChannel& session, Message message);
 
     void EventLoop();
 
