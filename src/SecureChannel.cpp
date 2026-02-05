@@ -93,7 +93,7 @@ int SecureChannel::Receive(std::vector<uint8_t>& message)
 
     // Receive encrypted message from socket
     std::vector<uint8_t> ciphertext;
-    std::size_t ciphertext_size = _socket.ReceiveBytes(ciphertext);
+    int ciphertext_size = _socket.ReceiveBytes(ciphertext);
     if (ciphertext_size > 0)
     {
         // Decrypt Ciphertext
