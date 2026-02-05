@@ -17,9 +17,16 @@
 
 using namespace CryptoPP;
 
-SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
+SecureChannel::SecureChannel(TcpSocket socket)
     : _socket(socket)
     , _session_key(AES::DEFAULT_KEYLENGTH)
+{}
+SecureChannel::SecureChannel(const SecureChannel& other)
+    : _socket(other._socket)
+    , _session_key(other._session_key)
+{}
+
+bool SecureChannel::EstablishKey(HostType host_type)
 {
     // Key Agreement
     OID CURVE = ASN1::secp256r1();
@@ -41,9 +48,8 @@ SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
     }
     
     if(!dh.Agree(shared, priv, pubOther))
-        throw std::runtime_error("Failed to reach shared secret");
+        return false;
 
-    
     // Key Derivation
     HKDF<SHA1> hkdf;
     byte info[] = "secure messaging";
@@ -54,11 +60,9 @@ SecureChannel::SecureChannel(TcpSocket socket, HostType host_type)
         salt, strlen((const char*)salt), 
         info, strlen((const char*)info)
     );
+
+    return true;
 }
-SecureChannel::SecureChannel(const SecureChannel& other)
-    : _socket(other._socket)
-    , _session_key(other._session_key)
-{}
 
 int SecureChannel::Send(const std::vector<uint8_t>& message)
 {
