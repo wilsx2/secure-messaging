@@ -23,6 +23,7 @@ class Server
     bool SendMessage(Message message, std::string client);
 
     void EstablishConnection(TcpSocket client_socket);
+    void CloseConnection(TcpSocket client_socket);
     void HandleRequest(TcpSocket client_socket);
     bool HandleMessage(Message message, TcpSocket client_socket);
     bool HandleLoginMessage(Message message, TcpSocket client_socket);

@@ -37,6 +37,13 @@ void Server::EstablishConnection(TcpSocket client_socket)
     _clients.emplace(client_socket.GetSockfd(), channel);
 }
 
+void Server::CloseConnection(TcpSocket client_socket)
+{
+    std::cout << "Closing connection" << std::endl;
+    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_socket.GetSockfd(), NULL);
+    client_socket.Close();
+}
+
 bool Server::SendMessage(Message message, int client)
 {
     auto pair = _clients.find(client);
@@ -79,6 +86,10 @@ void Server::HandleRequest(TcpSocket client_socket)
                 client_socket.GetSockfd()
             );
         }
+    }
+    else
+    {
+        CloseConnection(client_socket);
     }
 }
 
@@ -148,6 +159,7 @@ void Server::EventLoop()
 
         for (int i = 0; i < num_events; ++i)
         {
+            std::cout << (events[i].events) << std::endl;
             if (events[i].data.fd == _socket.GetSockfd())
             { // Accept new connection
                 TcpSocket client_socket = _socket.Accept();
