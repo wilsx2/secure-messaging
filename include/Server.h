@@ -9,6 +9,13 @@
 #include <thread>
 #include <optional>
 
+struct Session
+{
+    SecureChannel channel;
+    std::string username;
+    bool authenticated;
+};
+
 class Server
 {
     private:
@@ -17,7 +24,7 @@ class Server
     TcpSocket _socket;
     int _epoll_fd;
     ThreadPool _pool;
-    std::map<int, SecureChannel> _sessions;
+    std::map<int, Session> _sessions;
     std::map<std::string, int> _user_to_socket;
     
     bool SendMessage(SecureChannel& channel, Message message);
@@ -26,10 +33,11 @@ class Server
 
     void EstablishConnection(TcpSocket client_socket);
     void CloseConnection(TcpSocket client_socket);
+
     void HandleRequest(TcpSocket client_socket);
-    bool HandleMessage(SecureChannel& session, Message message);
-    bool HandleLoginMessage(SecureChannel& session, Message message);
-    bool HandleChatMessage(SecureChannel& session, Message message);
+    bool HandleMessage(Session& session, Message message);
+    bool HandleLoginMessage(Session& session, Message message);
+    bool HandleChatMessage(Session& session, Message message);
 
     void EventLoop();
 

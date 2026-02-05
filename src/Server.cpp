@@ -26,15 +26,16 @@ void Server::EstablishConnection(TcpSocket client_socket)
 {
     std::cout << "Establishing connection" << std::endl;
 
+    // Create secure session
+    Session session { SecureChannel(client_socket), "", false };
+    session.channel.EstablishKey(HostType::Server);
+    _sessions.emplace(client_socket.GetFd(), session); // TODO: Move semantics
+
     // Add to epoll
     epoll_event ev {};
     ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = client_socket.GetFd();
     epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_socket.GetFd(), &ev); // TODO: Handle errors
-    
-    // Create Secure Channel
-    SecureChannel channel (client_socket, HostType::Server);
-    _sessions.emplace(client_socket.GetFd(), channel); // TODO: Move semantics
 }
 
 void Server::CloseConnection(TcpSocket client_socket)
@@ -42,6 +43,12 @@ void Server::CloseConnection(TcpSocket client_socket)
     std::cout << "Closing connection" << std::endl;
     epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_socket.GetFd(), NULL);
     client_socket.Close();
+
+    auto it = _sessions.find(client_socket.GetFd());
+    if (it == _sessions.end())
+        return;
+    _user_to_socket.erase(it->second.username);
+    _sessions.erase(client_socket.GetFd());
 }
 
 bool Server::SendMessage(SecureChannel& channel, Message message)
@@ -70,11 +77,10 @@ void Server::HandleRequest(TcpSocket client_socket)
         return;
 
     // Receive message across secure channel
-    SecureChannel& session = it->second;
-    SecureChannel& channel = session;
+    Session& session = it->second;
     Message message;
-    std::vector<uint8_t> data;        
-    if (channel.Receive(data) > 0)
+    std::vector<uint8_t> data;
+    if (session.channel.Receive(data) > 0)
     {
         if (message.Deserialize(data))
         {
@@ -83,7 +89,7 @@ void Server::HandleRequest(TcpSocket client_socket)
         }
         else
         {
-            SendErrorMessage(session, "Message received failed to deserialize.");
+            SendErrorMessage(session.channel, "Message received failed to deserialize.");
         }
     }
     else
@@ -92,39 +98,54 @@ void Server::HandleRequest(TcpSocket client_socket)
     }
 }
 
-bool Server::HandleMessage(SecureChannel& session, Message message)
+bool Server::HandleMessage(Session& session, Message message)
 {
     std::optional<std::string> type = message.Get("type");
 
          if (type == "login")   return HandleLoginMessage(session, message);
     else if (type == "chat")    return HandleChatMessage(session, message);
 
-    SendErrorMessage(session, "Message of unrecognized or missing type.");
+    SendErrorMessage(session.channel, "Message of unrecognized or missing type.");
     return false;
 }
 
-bool Server::HandleLoginMessage(SecureChannel& session, Message message)
+bool Server::HandleLoginMessage(Session& session, Message message)
 {
     if (!message.Has("username"))
     {
-        SendErrorMessage(session, "Login message is missing username.");
+        SendErrorMessage(session.channel, "Login message is missing username.");
         return false;
     }
 
     std::string username = message.Get("username").value();
-    _user_to_socket.emplace(username, session.GetSocket().GetFd());
+    if (_user_to_socket.contains(username))
+    {
+        SendErrorMessage(session.channel, "User of that name is already logged in.");
+        return false;
+    }
+
+    session.username = username;
+    session.authenticated = true;
+    _user_to_socket.emplace(username, session.channel.GetSocket().GetFd());
 
     message.Set("type", "logged in");
-    return SendMessage(session, message);
+    return SendMessage(session.channel, message);
 }
 
-bool Server::HandleChatMessage(SecureChannel& session, Message message)
+bool Server::HandleChatMessage(Session& session, Message message)
 {
     if (!message.HasAll("to", "content"))
     {
-        SendErrorMessage(session, "Chat message is missing username.");
+        SendErrorMessage(session.channel, "Chat message is missing recipient.");
         return false;
     }
+    if (!session.authenticated)
+    {
+        SendErrorMessage(session.channel, "Sender is unauthenticated.");
+        return false;
+    }
+
+    message.Set("from", session.username);
     const std::string& recipient = message.Get("to").value();
     auto user_it = _user_to_socket.find(recipient);
     if (user_it == _user_to_socket.end())
@@ -134,7 +155,7 @@ bool Server::HandleChatMessage(SecureChannel& session, Message message)
     if (session_it == _sessions.end())
         return false;
 
-    return SendMessage(session_it->second, message);
+    return SendMessage(session_it->second.channel, message);
 }
 
 void Server::EventLoop()

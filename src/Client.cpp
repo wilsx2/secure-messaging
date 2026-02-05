@@ -155,7 +155,8 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
 
 void Client::Run()
 {
-    SecureChannel channel (_socket, HostType::Client);
+    SecureChannel channel (_socket);
+    channel.EstablishKey(HostType::Client);
     std::thread rec ([&](){ReceiveLoop(channel);});
     SendLoop(channel);        
     rec.join();
