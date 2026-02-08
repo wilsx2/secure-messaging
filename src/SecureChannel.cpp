@@ -51,7 +51,7 @@ bool SecureChannel::EstablishKey(HostType host_type)
         return false;
 
     // Key Derivation
-    HKDF<SHA1> hkdf;
+    HKDF<SHA256> hkdf;
     byte info[] = "secure messaging";
     byte salt[] = "salt";
     hkdf.DeriveKey(
