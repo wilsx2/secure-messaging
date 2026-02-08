@@ -13,6 +13,12 @@ class Message
     private:
     std::map<std::string,std::string> _key_values;
 
+    struct WireFormat
+    {
+        static constexpr uint16_t MAX_NUM_PAIRS = 1024u;
+        static constexpr uint16_t MAX_STRING_LEN = 1024u;
+    };
+
     public:
     Message() = default;
     Message(std::initializer_list<std::pair<std::string, std::string>> list);

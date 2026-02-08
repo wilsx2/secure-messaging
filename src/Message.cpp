@@ -1,4 +1,5 @@
 #include "Message.h"
+#include <arpa/inet.h> 
 #include <cstring>
 #include <iostream>
 
@@ -31,29 +32,32 @@ std::vector<uint8_t> Message::Serialize() const
     std::vector<uint8_t> bytes;
     
     // Store number of pairs
-    std::size_t num_pairs = _key_values.size();
+    uint16_t num_pairs = static_cast<uint16_t>(_key_values.size());
+    uint16_t num_pairs_be = htons(num_pairs);
     bytes.insert(
         bytes.end(), 
-        reinterpret_cast<uint8_t*>(&num_pairs), 
-        reinterpret_cast<uint8_t*>(&num_pairs) + sizeof(num_pairs)
+        reinterpret_cast<uint8_t*>(&num_pairs_be), 
+        reinterpret_cast<uint8_t*>(&num_pairs_be) + sizeof(num_pairs_be)
     );
     
     // Store each pair
     for (const auto& _key_value_pair : _key_values)
     {
-        std::size_t key_len = _key_value_pair.first.size();
-        std::size_t val_len = _key_value_pair.second.size();
+        uint16_t key_len = static_cast<uint16_t>(_key_value_pair.first.size());
+        uint16_t val_len = static_cast<uint16_t>(_key_value_pair.second.size());
+        uint16_t key_len_be = htons(key_len);
+        uint16_t val_len_be = htons(val_len);
 
         // Store lengths
         bytes.insert(
-            bytes.end(), 
-            reinterpret_cast<uint8_t*>(&key_len),
-            reinterpret_cast<uint8_t*>(&key_len) + sizeof(key_len)
+            bytes.end(),
+            reinterpret_cast<uint8_t*>(&key_len_be),
+            reinterpret_cast<uint8_t*>(&key_len_be) + sizeof(key_len_be)
         );
         bytes.insert(
             bytes.end(), 
-            reinterpret_cast<uint8_t*>(&val_len),
-            reinterpret_cast<uint8_t*>(&val_len) + sizeof(val_len)
+            reinterpret_cast<uint8_t*>(&val_len_be),
+            reinterpret_cast<uint8_t*>(&val_len_be) + sizeof(val_len_be)
         );
 
         // Store content
@@ -74,31 +78,40 @@ std::vector<uint8_t> Message::Serialize() const
 
 bool Message::Deserialize(const std::vector<uint8_t>& bytes)
 {
-    std::size_t curr = 0;
+    uint32_t curr = 0;
     bool success;
     std::map<std::string, std::string> key_values;
 
     // Read number of pairs
-    if (bytes.size() < sizeof(std::size_t))
+    if (bytes.size() < sizeof(uint16_t))
         return false;
-    std::size_t num_pairs;
-    std::memcpy(&num_pairs, &bytes[curr], sizeof(num_pairs));
-    curr += sizeof(num_pairs);
+    uint16_t num_pairs_be, num_pairs;
+    std::memcpy(&num_pairs_be, &bytes[curr], sizeof(num_pairs_be));
+    num_pairs = ntohs(num_pairs_be);
+    curr += sizeof(num_pairs_be);
+
+    // Check pair size
+    if (num_pairs > WireFormat::MAX_NUM_PAIRS)
+        return false;
 
     // Read each pair
-    for (std::size_t i = 0; i < num_pairs; ++i) {
+    for (uint16_t i = 0; i < num_pairs; ++i) {
         // Read string sizes
-        std::size_t key_len, val_len;
+        uint16_t key_len, val_len, key_len_be, val_len_be;
         if (curr + sizeof(key_len) + sizeof(val_len) > bytes.size())
             return false;
         
-        std::memcpy(&key_len, &bytes[curr], sizeof(key_len));
+        std::memcpy(&key_len_be, &bytes[curr], sizeof(key_len_be));
+        key_len = ntohs(key_len_be);
         curr += sizeof(key_len);
-        std::memcpy(&val_len, &bytes[curr], sizeof(val_len));
+        std::memcpy(&val_len_be, &bytes[curr], sizeof(val_len_be));
+        val_len = ntohs(val_len_be);
         curr += sizeof(val_len);
         
         // Read string contents
-        if (curr + key_len + val_len > bytes.size())
+        if (curr + key_len + val_len > bytes.size()
+            || key_len > WireFormat::MAX_STRING_LEN
+            || val_len > WireFormat::MAX_STRING_LEN)
             return false;
 
         std::string key(bytes.begin() + curr, bytes.begin() + curr + key_len);
