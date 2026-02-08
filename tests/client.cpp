@@ -3,5 +3,5 @@
 int main()
 {
     Client client;
-    client.Run();
+    while(client.Running());
 }

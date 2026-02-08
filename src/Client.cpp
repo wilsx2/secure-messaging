@@ -7,38 +7,33 @@
 
 Client::Client()
     : _channel(TcpSocket(PORT, INADDR_LOOPBACK))
+    , _running(true)
 { 
     _channel.GetSocket().Connect();
     _channel.EstablishKey(HostType::Client);
+
+    _recv_thread = std::make_unique<std::thread>([&](){ReceiveLoop();});
+    _send_thread = std::make_unique<std::thread>([&](){SendLoop();});
 }
 Client::~Client()
 {
+    if (_recv_thread)
+        _recv_thread->join();
+    if (_send_thread)
+        _send_thread->join();
     _channel.GetSocket().Close();
 }
 
-std::vector<std::string> Client::ParseCommandArguments(const std::string& str)
+bool Client::Running()
 {
-    std::vector<std::string> args;
-
-    std::size_t i = 0;
-    std::size_t j = str.find(' ', i);
-    while (j != std::string::npos)
-    {
-        args.emplace_back(str.substr(i, j - i));
-        i = j + 1;
-        j = str.find(' ', i);
-    }
-    if(i < str.size())
-        args.emplace_back(str.substr(i));
-
-    return args;
+    return _running;
 }
 
 void Client::ReceiveLoop()
 {
     Message message;
     std::vector<uint8_t> data;
-    while (true)
+    while (_running)
     {
         if (_channel.Receive(data) > 0 && message.Deserialize(data))
         {
@@ -83,17 +78,45 @@ std::optional<std::string> Client::HandleChatMessage(const Message& message)
     return std::format("[{}]> {}", from, content);
 }
 
+std::vector<std::string> Client::ParseCommandArguments(const std::string& str)
+{
+    std::vector<std::string> args;
+
+    std::size_t i = 0;
+    std::size_t j = str.find(' ', i);
+    while (j != std::string::npos)
+    {
+        args.emplace_back(str.substr(i, j - i));
+        i = j + 1;
+        j = str.find(' ', i);
+    }
+    if(i < str.size())
+        args.emplace_back(str.substr(i));
+
+    return args;
+}
+
+void Client::SubmitCommand(const std::string& cmd)
+{
+    std::vector<std::string> args = ParseCommandArguments(cmd);
+    std::optional<Message> message = BuildMessage(args);
+    if (message.has_value())
+        SubmitMessage(message.value());
+}
+
+void Client::SubmitMessage(const Message& msg)
+{
+    _channel.Send(msg.Serialize());
+}
+
 void Client::SendLoop()
 {
     std::string arg;
     std::string input;
-    while (true)
+    while (_running)
     {
         std::getline(std::cin, input);
-        std::vector<std::string> args = ParseCommandArguments(input);
-        std::optional<Message> message = BuildMessage(args);
-        if (message.has_value())
-            _channel.Send(message.value().Serialize());
+        SubmitCommand(input);
     }
 }
 
@@ -108,9 +131,10 @@ std::optional<Message> Client::BuildMessage(const std::vector<std::string>& args
         // else if (type == "register")    return BuildRegistrationMessage(args);
         // else if (type == "list")        return BuildListActiveMessage(args);
         else if (type == "send")        return BuildChatMessage(args);
+        else if (type == "exit")        _running = false;
     }
 
-    return message;
+    return std::nullopt;
 }
 
 std::optional<Message> Client::BuildLoginMessage(const std::vector<std::string>& args)
@@ -149,11 +173,4 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
     message.Set("content", content);
 
     return message;
-}
-
-void Client::Run()
-{
-    std::thread rec ([&](){ReceiveLoop();});
-    SendLoop();        
-    rec.join();
 }
