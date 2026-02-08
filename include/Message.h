@@ -21,9 +21,9 @@ class Message
     bool HasAll(const Args&... keys) const;
     bool Has(const std::string& key) const;
     void Set(const std::string& key, const std::string& value);
-    std::vector<uint8_t> Serialize();
+    std::vector<uint8_t> Serialize() const;
     bool Deserialize(const std::vector<uint8_t>& data);
-    std::string ToString();
+    std::string ToString() const;
 };
 
 template<typename... Args>

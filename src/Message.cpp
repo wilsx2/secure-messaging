@@ -26,7 +26,7 @@ void Message::Set(const std::string& key, const std::string& value)
     _key_values.insert_or_assign(key, value);
 }
 
-std::vector<uint8_t> Message::Serialize()
+std::vector<uint8_t> Message::Serialize() const
 {
     std::vector<uint8_t> bytes;
     
@@ -114,7 +114,7 @@ bool Message::Deserialize(const std::vector<uint8_t>& bytes)
     _key_values = std::move(key_values);
     return true;
 }
-std::string Message::ToString()
+std::string Message::ToString() const
 {
     std::string output;
     for (auto& pair : _key_values)
