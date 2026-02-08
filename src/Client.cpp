@@ -21,7 +21,7 @@ std::vector<std::string> Client::ParseCommandArguments(const std::string& str)
 
     std::size_t i = 0;
     std::size_t j = str.find(' ', i);
-    while (j != -1)
+    while (j != std::string::npos)
     {
         args.emplace_back(str.substr(i, j - i));
         i = j + 1;
@@ -54,7 +54,7 @@ void Client::ReceiveLoop(SecureChannel& channel)
 
 std::optional<std::string> Client::HandleMessage(const Message& message)
 {
-    std::optional<std::string> type = message.Get("type");
+    std::optional<std::string> type = message.TryGet("type");
 
          if (type == "logged in")   return HandleLoggedInMessage(message);
     else if (type == "chat")        return HandleChatMessage(message);
@@ -65,23 +65,20 @@ std::optional<std::string> Client::HandleMessage(const Message& message)
 
 std::optional<std::string> Client::HandleLoggedInMessage(const Message& message)
 {
-    if (message.Get("type") != "logged in" || !message.Has("username"))
+    if (message.TryGet("type") != "logged in" || !message.Has("username"))
         return std::nullopt;
-
-    std::string username;
-    username = message.Get("username").value();
-    _username = username;    
+    
+    _username = message.Get("username");    
     return std::format("Logged in successfully as {}", _username.value());
 }
 
 std::optional<std::string> Client::HandleChatMessage(const Message& message)
 {
-    if (message.Get("type") != "chat" || message.Get("to") != _username || !message.HasAll("from", "content"))
+    if (message.TryGet("type") != "chat" || message.TryGet("to") != _username || !message.HasAll("from", "content"))
         return std::nullopt;
 
-    std::string from, content;
-    from = message.Get("from").value();
-    content = message.Get("content").value();
+    const std::string& from = message.Get("from");
+    const std::string& content = message.Get("content");
     return std::format("[{}]> {}", from, content);
 }
 
@@ -142,7 +139,7 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
     };
 
     std::string content;
-    for (int i = 2; i < args.size(); ++i)
+    for (std::size_t i = 2; i < args.size(); ++i)
     {
         if (content.size() > 0)
             content += " ";

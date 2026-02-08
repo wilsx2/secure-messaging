@@ -22,7 +22,7 @@ TcpSocket::TcpSocket(int port, u_long interface)
         &opt,
         sizeof(opt)
     );
-    CheckSyscall(_sockfd, "Failed to set sockopt");
+    CheckSyscall(result, "Failed to set sockopt");
 }
 TcpSocket::TcpSocket(int sockfd, struct sockaddr_in addr)
 {
@@ -110,7 +110,7 @@ int TcpSocket::Receive(void* data, std::size_t size, int flags)
 
 int TcpSocket::ReceiveAll(void* data, std::size_t size)
 {
-    int total_received = 0;
+    std::size_t total_received = 0;
 
     while (total_received < size)
     {

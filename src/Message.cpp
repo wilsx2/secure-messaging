@@ -10,8 +10,11 @@ Message::Message(std::initializer_list<std::pair<std::string, std::string>> list
         _key_values.emplace(pair);
     }
 }
-
-std::optional<std::string> Message::Get(const std::string& key) const
+const std::string& Message::Get(const std::string& key) const
+{
+    return _key_values.at(key);
+}
+std::optional<std::string> Message::TryGet(const std::string& key) const
 {
     auto it = _key_values.find(key);
     if (it == _key_values.end())
@@ -79,7 +82,6 @@ std::vector<uint8_t> Message::Serialize() const
 bool Message::Deserialize(const std::vector<uint8_t>& bytes)
 {
     uint32_t curr = 0;
-    bool success;
     std::map<std::string, std::string> key_values;
 
     // Read number of pairs

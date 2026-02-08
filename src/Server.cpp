@@ -100,7 +100,7 @@ void Server::HandleRequest(TcpSocket client_socket)
 
 bool Server::HandleMessage(Session& session, Message message)
 {
-    std::optional<std::string> type = message.Get("type");
+    std::optional<std::string> type = message.TryGet("type");
 
          if (type == "login")   return HandleLoginMessage(session, message);
     else if (type == "chat")    return HandleChatMessage(session, message);
@@ -117,7 +117,7 @@ bool Server::HandleLoginMessage(Session& session, Message message)
         return false;
     }
 
-    std::string username = message.Get("username").value();
+    const std::string& username = message.Get("username");
     if (_user_to_socket.contains(username))
     {
         SendErrorMessage(session.channel, "User of that name is already logged in.");
@@ -146,7 +146,7 @@ bool Server::HandleChatMessage(Session& session, Message message)
     }
 
     message.Set("from", session.username);
-    const std::string& recipient = message.Get("to").value();
+    const std::string& recipient = message.Get("to");
     auto user_it = _user_to_socket.find(recipient);
     if (user_it == _user_to_socket.end())
         return false;

@@ -22,7 +22,8 @@ class Message
     public:
     Message() = default;
     Message(std::initializer_list<std::pair<std::string, std::string>> list);
-    std::optional<std::string> Get(const std::string& key) const;
+    const std::string& Get(const std::string& key) const;
+    std::optional<std::string> TryGet(const std::string& key) const;
     template<typename... Args>
     bool HasAll(const Args&... keys) const;
     bool Has(const std::string& key) const;
