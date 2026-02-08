@@ -17,8 +17,10 @@ void ClientSession::Connect()
 
 void ClientSession::Disconnect()
 {
-    _connected = false;
-    _channel.GetSocket().Close();
+    if (_connected) {
+        _connected = false;
+        _channel.GetSocket().Close();
+    }
 }
 
 bool ClientSession::Connected()
@@ -66,7 +68,6 @@ std::optional<std::string> ClientSession::HandleMessage(const Message& message)
          if (type == "logged in")   return HandleLoggedInMessage(message);
     else if (type == "chat")        return HandleChatMessage(message);
     
-
     return std::nullopt;
 }
 
