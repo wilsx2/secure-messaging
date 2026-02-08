@@ -14,12 +14,12 @@ class SecureChannel
     CryptoPP::SecByteBlock _session_key;
 
     public:
-    SecureChannel(TcpSocket socket);
-    SecureChannel(const SecureChannel& other);
+    SecureChannel(TcpSocket&& socket);
+    SecureChannel(SecureChannel&& other);
     bool EstablishKey(HostType host_type);
     int Send(const std::vector<uint8_t>& message);
     int Receive(std::vector<uint8_t>& message);
-    TcpSocket GetSocket();
+    const TcpSocket& GetSocket();
 };
 
 #endif

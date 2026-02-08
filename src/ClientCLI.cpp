@@ -3,13 +3,17 @@
 void ClientCLI::Run()
 {
     _session.Connect();
-    _recv_thread = std::make_unique<std::thread>([&](){ReceiveLoop();});
-    _send_thread = std::make_unique<std::thread>([&](){SendLoop();});
 
-    while (_session.Connected());
+    if (_session.Connected())
+    {
+        _recv_thread = std::make_unique<std::thread>([&](){ReceiveLoop();});
+        _send_thread = std::make_unique<std::thread>([&](){SendLoop();});
 
-    _recv_thread->join();
-    _send_thread->join();
+        while (_session.Connected());
+
+        _recv_thread->join();
+        _send_thread->join();
+    }
 }
 
 void ClientCLI::SendLoop()

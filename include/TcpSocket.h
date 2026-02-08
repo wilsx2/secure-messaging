@@ -19,7 +19,9 @@ class TcpSocket
     TcpSocket(int port, u_long interface);
     TcpSocket(int sockfd, struct sockaddr_in addr);
     TcpSocket(int sockfd);
-    void Close();
+    TcpSocket(const TcpSocket&) = delete;
+    TcpSocket(TcpSocket&& other);
+    ~TcpSocket();
 
     void CheckSyscall(int result, std::string error_message);
 
@@ -36,8 +38,8 @@ class TcpSocket
     int ReceiveAll(void* data, std::size_t size);
     int ReceiveBytes(std::vector<uint8_t>& bytes);
 
-    struct sockaddr_in GetAddr();
-    int GetFd();
+    struct sockaddr_in GetAddr() const;
+    int GetFd() const;
 };
 
 #endif

@@ -19,10 +19,6 @@ int main()
     client_to_server.ReceiveBytes(data);
     std::string received_message (data.begin(), data.end());
 
-    server_to_client.Close();
-    client_to_server.Close();
-    server.Close();
-
     std::cout << "Sent: " << sent_message << std::endl;
     std::cout << "Recv: " << received_message << std::endl;
 }

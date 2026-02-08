@@ -18,37 +18,35 @@ Server::Server()
     epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _socket.GetFd(), &ev); // TODO: Handle errors
 }
 Server::~Server()
-{
-    _socket.Close();
-}
+{ }
 
-void Server::EstablishConnection(TcpSocket client_socket)
+void Server::EstablishConnection(TcpSocket&& client_socket)
 {
     std::cout << "Establishing connection" << std::endl;
+    int fd = client_socket.GetFd();
 
     // Create secure session
-    Session session { SecureChannel(client_socket), "", false };
+    Session session { SecureChannel(std::move(client_socket)), "", false };
     session.channel.EstablishKey(HostType::Server);
-    _sessions.emplace(client_socket.GetFd(), session); // TODO: Move semantics
+    _sessions.emplace(fd, std::move(session));
 
     // Add to epoll
     epoll_event ev {};
     ev.events = EPOLLIN | EPOLLET;
-    ev.data.fd = client_socket.GetFd();
-    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_socket.GetFd(), &ev); // TODO: Handle errors
+    ev.data.fd = fd;
+    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &ev); // TODO: Handle errors
 }
 
-void Server::CloseConnection(TcpSocket client_socket)
+void Server::CloseConnection(int client_fd)
 {
     std::cout << "Closing connection" << std::endl;
-    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_socket.GetFd(), NULL);
-    client_socket.Close();
+    epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 
-    auto it = _sessions.find(client_socket.GetFd());
+    auto it = _sessions.find(client_fd);
     if (it == _sessions.end())
         return;
     _user_to_socket.erase(it->second.username);
-    _sessions.erase(client_socket.GetFd());
+    _sessions.erase(client_fd);
 }
 
 bool Server::SendMessage(SecureChannel& channel, Message message)
@@ -66,12 +64,12 @@ bool Server::SendSuccessMessage(SecureChannel& channel, std::string content)
     return SendMessage(channel, {{"type", "success"}, {"content", content}});
 }
 
-void Server::HandleRequest(TcpSocket client_socket)
+void Server::HandleRequest(int client_fd)
 {
     std::cout << "Request received" << std::endl;
 
     // Check for secure channel between server and client
-    auto it = _sessions.find(client_socket.GetFd());
+    auto it = _sessions.find(client_fd);
     if (it == _sessions.end())
         //TODO: Error handling
         return;
@@ -94,7 +92,7 @@ void Server::HandleRequest(TcpSocket client_socket)
     }
     else
     {
-        CloseConnection(client_socket);
+        CloseConnection(client_fd);
     }
 }
 
@@ -176,7 +174,7 @@ void Server::EventLoop()
                 TcpSocket client_socket = _socket.Accept();
                 if (client_socket.GetFd() == -1)
                     continue;
-                EstablishConnection(client_socket);
+                EstablishConnection(std::move(client_socket));
             }
             else
             { // Handle request

@@ -17,12 +17,12 @@
 
 using namespace CryptoPP;
 
-SecureChannel::SecureChannel(TcpSocket socket)
-    : _socket(socket)
+SecureChannel::SecureChannel(TcpSocket&& socket)
+    : _socket(std::move(socket))
     , _session_key(AES::DEFAULT_KEYLENGTH)
 {}
-SecureChannel::SecureChannel(const SecureChannel& other)
-    : _socket(other._socket)
+SecureChannel::SecureChannel(SecureChannel&& other)
+    : _socket(std::move(other._socket))
     , _session_key(other._session_key)
 {}
 
@@ -38,6 +38,8 @@ bool SecureChannel::EstablishKey(HostType host_type)
 
     if (host_type == HostType::Client)
     {
+        if (_socket.Connect() == -1)
+            return false;
         _socket.Send(pub.BytePtr(), pub.SizeInBytes(), 0);
         _socket.Receive(pubOther.BytePtr(), pubOther.SizeInBytes(), 0);
     }
@@ -122,7 +124,7 @@ int SecureChannel::Receive(std::vector<uint8_t>& message)
     return ciphertext_size;
 }
 
-TcpSocket SecureChannel::GetSocket()
+const TcpSocket& SecureChannel::GetSocket()
 {
     return _socket;
 }

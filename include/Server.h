@@ -31,10 +31,10 @@ class Server
     bool SendErrorMessage(SecureChannel& channel, std::string content);
     bool SendSuccessMessage(SecureChannel& channel, std::string content);
 
-    void EstablishConnection(TcpSocket client_socket);
-    void CloseConnection(TcpSocket client_socket);
+    void EstablishConnection(TcpSocket&& client_socket);
+    void CloseConnection(int client_fd);
 
-    void HandleRequest(TcpSocket client_socket);
+    void HandleRequest(int client_fd);
     bool HandleMessage(Session& session, Message message);
     bool HandleLoginMessage(Session& session, Message message);
     bool HandleChatMessage(Session& session, Message message);

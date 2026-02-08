@@ -5,22 +5,21 @@
 #include <format>
 
 ClientSession::ClientSession()
-    : _channel(TcpSocket(PORT, INADDR_LOOPBACK))
+    : _channel({PORT, INADDR_LOOPBACK})
+    , _connected(false)
 { }
 
 void ClientSession::Connect()
 {
-    _channel.GetSocket().Connect();
-    _channel.EstablishKey(HostType::Client);
-    _connected = true;
+    if (_channel.EstablishKey(HostType::Client))
+    {
+        _connected = true;
+    }
 }
 
 void ClientSession::Disconnect()
 {
-    if (_connected) {
-        _connected = false;
-        _channel.GetSocket().Close();
-    }
+    _connected = false;
 }
 
 bool ClientSession::Connected()

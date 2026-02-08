@@ -39,8 +39,15 @@ TcpSocket::TcpSocket(int sockfd)
     getsockname(sockfd, (sockaddr*)&_addr, &addr_len);
     CheckSyscall(_sockfd, "Failed to create wrapper around sockfd " + std::to_string(sockfd));
 }
+TcpSocket::TcpSocket(TcpSocket&& other)
+{
+    _sockfd = other._sockfd;
+    _addr = other._addr;
 
-void TcpSocket::Close()
+    other._sockfd = -1;
+}
+
+TcpSocket::~TcpSocket()
 {
     close(_sockfd);
 }
@@ -143,9 +150,11 @@ int TcpSocket::ReceiveBytes(std::vector<uint8_t>& bytes)
     return message_len;
 }
 
-struct sockaddr_in TcpSocket::GetAddr(){
+struct sockaddr_in TcpSocket::GetAddr() const
+{
     return _addr;
 }
-int TcpSocket::GetFd(){
+int TcpSocket::GetFd() const 
+{
     return _sockfd;
 }
