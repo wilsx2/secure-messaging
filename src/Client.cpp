@@ -6,13 +6,14 @@
 #include <format>
 
 Client::Client()
-    : _socket(PORT, INADDR_LOOPBACK)
+    : _channel(TcpSocket(PORT, INADDR_LOOPBACK))
 { 
-    _socket.Connect();
+    _channel.GetSocket().Connect();
+    _channel.EstablishKey(HostType::Client);
 }
 Client::~Client()
 {
-    _socket.Close();
+    _channel.GetSocket().Close();
 }
 
 std::vector<std::string> Client::ParseCommandArguments(const std::string& str)
@@ -33,13 +34,13 @@ std::vector<std::string> Client::ParseCommandArguments(const std::string& str)
     return args;
 }
 
-void Client::ReceiveLoop(SecureChannel& channel)
+void Client::ReceiveLoop()
 {
     Message message;
     std::vector<uint8_t> data;
     while (true)
     {
-        if (channel.Receive(data) > 0 && message.Deserialize(data))
+        if (_channel.Receive(data) > 0 && message.Deserialize(data))
         {
             std::cout << "[Client] Received: " << message.ToString() << std::endl;
             std::optional<std::string> output = HandleMessage(message);
@@ -82,7 +83,7 @@ std::optional<std::string> Client::HandleChatMessage(const Message& message)
     return std::format("[{}]> {}", from, content);
 }
 
-void Client::SendLoop(SecureChannel& channel)
+void Client::SendLoop()
 {
     std::string arg;
     std::string input;
@@ -92,7 +93,7 @@ void Client::SendLoop(SecureChannel& channel)
         std::vector<std::string> args = ParseCommandArguments(input);
         std::optional<Message> message = BuildMessage(args);
         if (message.has_value())
-            channel.Send(message.value().Serialize());
+            _channel.Send(message.value().Serialize());
     }
 }
 
@@ -152,9 +153,7 @@ std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& 
 
 void Client::Run()
 {
-    SecureChannel channel (_socket);
-    channel.EstablishKey(HostType::Client);
-    std::thread rec ([&](){ReceiveLoop(channel);});
-    SendLoop(channel);        
+    std::thread rec ([&](){ReceiveLoop();});
+    SendLoop();        
     rec.join();
 }
