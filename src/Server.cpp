@@ -20,21 +20,20 @@ Server::Server()
 Server::~Server()
 { }
 
-void Server::EstablishConnection(TcpSocket&& client_socket)
+void Server::EstablishConnection(int client_fd)
 {
     std::cout << "Establishing connection" << std::endl;
-    int fd = client_socket.GetFd();
 
     // Create secure session
-    Session session { SecureChannel(std::move(client_socket)), "", false };
+    Session session { SecureChannel(client_fd), "", false };
     session.channel.EstablishKey(HostType::Server);
-    _sessions.emplace(fd, std::move(session));
+    _sessions.emplace(client_fd, std::move(session));
 
     // Add to epoll
     epoll_event ev {};
     ev.events = EPOLLIN | EPOLLET;
-    ev.data.fd = fd;
-    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd, &ev); // TODO: Handle errors
+    ev.data.fd = client_fd;
+    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_fd, &ev); // TODO: Handle errors
 }
 
 void Server::CloseConnection(int client_fd)
@@ -171,10 +170,10 @@ void Server::EventLoop()
             std::cout << (events[i].events) << std::endl;
             if (events[i].data.fd == _socket.GetFd())
             { // Accept new connection
-                TcpSocket client_socket = _socket.Accept();
-                if (client_socket.GetFd() == -1)
+                int client_fd = _socket.Accept();
+                if (client_fd == -1)
                     continue;
-                EstablishConnection(std::move(client_socket));
+                EstablishConnection(client_fd);
             }
             else
             { // Handle request

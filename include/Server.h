@@ -31,7 +31,7 @@ class Server
     bool SendErrorMessage(SecureChannel& channel, std::string content);
     bool SendSuccessMessage(SecureChannel& channel, std::string content);
 
-    void EstablishConnection(TcpSocket&& client_socket);
+    void EstablishConnection(int client_fd);
     void CloseConnection(int client_fd);
 
     void HandleRequest(int client_fd);

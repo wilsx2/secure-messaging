@@ -85,12 +85,9 @@ int TcpSocket::Listen(int backlog)
     CheckSyscall(result, "Failed to listen from socket");
     return result;
 }
-TcpSocket TcpSocket::Accept()
+int TcpSocket::Accept()
 {
-    struct sockaddr_in addr;
-    int address_length = sizeof(addr);
-    int new_sockfd = accept(_sockfd, (struct sockaddr *)&addr, (socklen_t *)&address_length);
-    return TcpSocket(new_sockfd, addr);
+    return accept(_sockfd, nullptr, nullptr);
 }
 
 int TcpSocket::Send(const void* data, std::size_t size, int flags)
