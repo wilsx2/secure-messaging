@@ -1,54 +1,65 @@
-#include "Client.h"
+#include "ClientSession.h"
 #include "Global.h"
 #include "SecureChannel.h"
 #include "Message.h"
-#include <thread>
 #include <format>
 
-Client::Client()
+ClientSession::ClientSession()
     : _channel(TcpSocket(PORT, INADDR_LOOPBACK))
-    , _running(true)
-{ 
+{ }
+
+void ClientSession::Connect()
+{
     _channel.GetSocket().Connect();
     _channel.EstablishKey(HostType::Client);
-
-    _recv_thread = std::make_unique<std::thread>([&](){ReceiveLoop();});
-    _send_thread = std::make_unique<std::thread>([&](){SendLoop();});
+    _connected = true;
 }
-Client::~Client()
+
+void ClientSession::Disconnect()
 {
-    if (_recv_thread)
-        _recv_thread->join();
-    if (_send_thread)
-        _send_thread->join();
+    _connected = false;
     _channel.GetSocket().Close();
 }
 
-bool Client::Running()
+bool ClientSession::Connected()
 {
-    return _running;
+    return _connected;
 }
 
-void Client::ReceiveLoop()
+void ClientSession::SendCommand(const std::string& cmd)
+{
+    std::vector<std::string> args = ParseCommandArguments(cmd);
+    std::optional<Message> message = BuildMessage(args);
+    if (message.has_value())
+        SendRequest(message.value());
+}
+
+void ClientSession::SendRequest(const Message& msg)
+{
+    _channel.Send(msg.Serialize());
+}
+
+bool ClientSession::TryResponse()
 {
     Message message;
     std::vector<uint8_t> data;
-    while (_running)
+    if (_channel.Receive(data) > 0 && message.Deserialize(data))
     {
-        if (_channel.Receive(data) > 0 && message.Deserialize(data))
+        std::cout << "[Client] Received: " << message.ToString() << std::endl;
+        std::optional<std::string> output = HandleMessage(message);
+        if (output.has_value())
         {
-            std::cout << "[Client] Received: " << message.ToString() << std::endl;
-            std::optional<std::string> output = HandleMessage(message);
-            if (output.has_value())
-            {
 
-                std::cout << output.value() << std::endl;
-            }
+            std::cout << output.value() << std::endl;
         }
+
+        return true;
     }
+    
+    return false;
 }
 
-std::optional<std::string> Client::HandleMessage(const Message& message)
+std::optional<std::string> ClientSession::HandleMessage(const Message& message)
 {
     std::optional<std::string> type = message.TryGet("type");
 
@@ -59,7 +70,7 @@ std::optional<std::string> Client::HandleMessage(const Message& message)
     return std::nullopt;
 }
 
-std::optional<std::string> Client::HandleLoggedInMessage(const Message& message)
+std::optional<std::string> ClientSession::HandleLoggedInMessage(const Message& message)
 {
     if (message.TryGet("type") != "logged in" || !message.Has("username"))
         return std::nullopt;
@@ -68,7 +79,7 @@ std::optional<std::string> Client::HandleLoggedInMessage(const Message& message)
     return std::format("Logged in successfully as {}", _username.value());
 }
 
-std::optional<std::string> Client::HandleChatMessage(const Message& message)
+std::optional<std::string> ClientSession::HandleChatMessage(const Message& message)
 {
     if (message.TryGet("type") != "chat" || message.TryGet("to") != _username || !message.HasAll("from", "content"))
         return std::nullopt;
@@ -78,7 +89,7 @@ std::optional<std::string> Client::HandleChatMessage(const Message& message)
     return std::format("[{}]> {}", from, content);
 }
 
-std::vector<std::string> Client::ParseCommandArguments(const std::string& str)
+std::vector<std::string> ClientSession::ParseCommandArguments(const std::string& str)
 {
     std::vector<std::string> args;
 
@@ -96,31 +107,7 @@ std::vector<std::string> Client::ParseCommandArguments(const std::string& str)
     return args;
 }
 
-void Client::SubmitCommand(const std::string& cmd)
-{
-    std::vector<std::string> args = ParseCommandArguments(cmd);
-    std::optional<Message> message = BuildMessage(args);
-    if (message.has_value())
-        SubmitMessage(message.value());
-}
-
-void Client::SubmitMessage(const Message& msg)
-{
-    _channel.Send(msg.Serialize());
-}
-
-void Client::SendLoop()
-{
-    std::string arg;
-    std::string input;
-    while (_running)
-    {
-        std::getline(std::cin, input);
-        SubmitCommand(input);
-    }
-}
-
-std::optional<Message> Client::BuildMessage(const std::vector<std::string>& args)
+std::optional<Message> ClientSession::BuildMessage(const std::vector<std::string>& args)
 {
     Message message;
     if (args.size() >= 1)
@@ -131,13 +118,13 @@ std::optional<Message> Client::BuildMessage(const std::vector<std::string>& args
         // else if (type == "register")    return BuildRegistrationMessage(args);
         // else if (type == "list")        return BuildListActiveMessage(args);
         else if (type == "send")        return BuildChatMessage(args);
-        else if (type == "exit")        _running = false;
+        else if (type == "exit")        Disconnect();
     }
 
     return std::nullopt;
 }
 
-std::optional<Message> Client::BuildLoginMessage(const std::vector<std::string>& args)
+std::optional<Message> ClientSession::BuildLoginMessage(const std::vector<std::string>& args)
 {
     if (args.size() != 2 || args[0] != "login")
         return std::nullopt;
@@ -149,9 +136,9 @@ std::optional<Message> Client::BuildLoginMessage(const std::vector<std::string>&
 
     return message;
 }
-// std::optional<Message> Client::BuildRegistrationMessage(const std::vector<std::string>& args);
-// std::optional<Message> Client::BuildListActiveMessage(const std::vector<std::string>& args);
-std::optional<Message> Client::BuildChatMessage(const std::vector<std::string>& args)
+// std::optional<Message> ClientSession::BuildRegistrationMessage(const std::vector<std::string>& args);
+// std::optional<Message> ClientSession::BuildListActiveMessage(const std::vector<std::string>& args);
+std::optional<Message> ClientSession::BuildChatMessage(const std::vector<std::string>& args)
 {
     if (args.size() < 3 || args[0] != "send" || !_username.has_value())
         return std::nullopt;

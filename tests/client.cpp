@@ -1,7 +1,7 @@
-#include "Client.h"
+#include "ClientCLI.h"
 
 int main()
 {
-    Client client;
-    while(client.Running());
+    ClientCLI cli;
+    cli.Run();
 }
