@@ -2,8 +2,6 @@
 #include "Server.h"
 #include "SecureChannel.h"
 #include "Message.h"
-#include <sys/epoll.h>
-
 Server::Server()
     : _socket(PORT, INADDR_ANY)
     , _epoll_fd(epoll_create1(0)) // TODO: Handle errors
@@ -19,6 +17,35 @@ Server::Server()
 }
 Server::~Server()
 { }
+
+void Server::Run()
+{
+    while(HandleEvents());
+}
+
+bool Server::HandleEvents()
+{
+    int num_events = epoll_wait(_epoll_fd, _epoll_events.data(), MAX_EVENTS, -1);
+    if (num_events < 0)
+        return false;
+
+    for (int i = 0; i < num_events; ++i)
+    {
+        if (_epoll_events[i].data.fd == _socket.GetFd())
+        { // Accept new connection
+            int client_fd = _socket.Accept();
+            if (client_fd == -1)
+                continue;
+            EstablishConnection(client_fd);
+        }
+        else
+        { // Handle request
+            HandleRequest(_epoll_events[i].data.fd);
+        }
+    }
+
+    return true;
+}
 
 void Server::EstablishConnection(int client_fd)
 {
@@ -65,7 +92,7 @@ bool Server::SendSuccessMessage(SecureChannel& channel, std::string content)
 
 void Server::HandleRequest(int client_fd)
 {
-    std::cout << "Request received" << std::endl;
+    // TODO: Log
 
     // Check for secure channel between server and client
     auto it = _sessions.find(client_fd);
@@ -153,37 +180,4 @@ bool Server::HandleChatMessage(Session& session, Message message)
         return false;
 
     return SendMessage(session_it->second.channel, message);
-}
-
-void Server::EventLoop()
-{
-    std::array<epoll_event, MAX_EVENTS> events;
-
-    while(true)
-    {
-        int num_events = epoll_wait(_epoll_fd, events.data(), MAX_EVENTS, -1);
-        if (num_events < 0)
-            break;
-
-        for (int i = 0; i < num_events; ++i)
-        {
-            std::cout << (events[i].events) << std::endl;
-            if (events[i].data.fd == _socket.GetFd())
-            { // Accept new connection
-                int client_fd = _socket.Accept();
-                if (client_fd == -1)
-                    continue;
-                EstablishConnection(client_fd);
-            }
-            else
-            { // Handle request
-                HandleRequest(events[i].data.fd);
-            }
-        }
-    }
-}
-
-void Server::Run()
-{
-    EventLoop();
 }

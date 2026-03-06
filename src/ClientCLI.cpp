@@ -30,6 +30,6 @@ void ClientCLI::ReceiveLoop()
 {
     while (_session.Connected())
     {
-        _session.TryResponse();
+        _session.AwaitResponse();
     }
 }

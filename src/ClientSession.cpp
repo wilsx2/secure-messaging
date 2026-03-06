@@ -20,6 +20,7 @@ void ClientSession::Connect()
 void ClientSession::Disconnect()
 {
     _connected = false;
+    
 }
 
 bool ClientSession::Connected()
@@ -40,7 +41,7 @@ void ClientSession::SendRequest(const Message& msg)
     _channel.Send(msg.Serialize());
 }
 
-bool ClientSession::TryResponse()
+bool ClientSession::AwaitResponse()
 {
     Message message;
     std::vector<uint8_t> data;
@@ -48,11 +49,11 @@ bool ClientSession::TryResponse()
     {
         std::cout << "[Client] Received: " << message.ToString() << std::endl;
         std::optional<std::string> output = HandleMessage(message);
-        if (output.has_value())
-        {
-
-            std::cout << output.value() << std::endl;
-        }
+        // TODO: Print from ClientCLI
+        // if (output.has_value())
+        // {
+        //     std::cout << output.value() << std::endl;
+        // }
 
         return true;
     }

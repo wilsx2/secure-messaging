@@ -8,6 +8,9 @@
 #include <vector>
 #include <thread>
 #include <optional>
+#include <array>
+#include <sys/epoll.h>
+
 
 struct Session
 {
@@ -23,10 +26,12 @@ class Server
 
     TcpSocket _socket;
     int _epoll_fd;
+    std::array<epoll_event, MAX_EVENTS> _epoll_events;
+
     ThreadPool _pool;
     std::map<int, Session> _sessions;
     std::map<std::string, int> _user_to_socket;
-    
+
     bool SendMessage(SecureChannel& channel, Message message);
     bool SendErrorMessage(SecureChannel& channel, std::string content);
     bool SendSuccessMessage(SecureChannel& channel, std::string content);
@@ -39,12 +44,11 @@ class Server
     bool HandleLoginMessage(Session& session, Message message);
     bool HandleChatMessage(Session& session, Message message);
 
-    void EventLoop();
-
     public:
     Server();
     ~Server();
     void Run();
+    bool HandleEvents();
 };
 
 #endif

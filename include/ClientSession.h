@@ -34,7 +34,8 @@ class ClientSession
     bool Connected();
     void SendCommand(const std::string& cmd);
     void SendRequest(const Message& msg);
-    bool TryResponse();
+    bool AwaitResponse();
+    //TODO: Non-blocking TryResponse()
 };
 
 #endif
