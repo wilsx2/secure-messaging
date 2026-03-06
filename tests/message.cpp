@@ -8,12 +8,11 @@ int main()
     m.Set("to", "alice");
     m.Set("from", "bob");
     m.Set("content", "You're really cool.");
-    std::cout << "m     " << m.ToString() << std::endl;
     
     Message n;
-    // m.Serialize();
     n.Deserialize(m.Serialize());
-    std::cout << "n     " << n.ToString() << std::endl;
 
-    return 0;
+    std::cout << "m     " << m.ToString() << std::endl;
+    std::cout << "n     " << n.ToString() << std::endl;
+    return !(m.ToString() == n.ToString());
 }

@@ -21,4 +21,5 @@ int main()
 
     std::cout << "Sent: " << sent_message << std::endl;
     std::cout << "Recv: " << received_message << std::endl;
+    return !(sent_message == received_message);
 }

@@ -22,8 +22,6 @@ int main()
         client.AwaitResponse();
     }
 
-    std::cout << "end \n";
-
     server_running = false;
     server_thread.join();
     return 0;
