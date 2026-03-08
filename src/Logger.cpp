@@ -1,7 +1,7 @@
 #include "Logger.h"
 
 Logger::Logger(std::unique_ptr<LoggingTarget>&& target, Level min_level)
-    : _target(target)
+    : _target(target.release())
     , _min_level(min_level)
 {}
 
