@@ -1,5 +1,6 @@
-#include "Global.h"
 #include "Server.h"
+#include "Global.h"
+#include "Logger.h"
 #include "SecureChannel.h"
 #include "Message.h"
 Server::Server()
@@ -49,7 +50,7 @@ bool Server::HandleEvents()
 
 void Server::EstablishConnection(int client_fd)
 {
-    std::cout << "Establishing connection" << std::endl;
+    Logger::GetInstance().Info("[Server] Establishing connection " + std::to_string(client_fd));
 
     // Create secure session
     Session session { SecureChannel(client_fd), "", false };
@@ -65,7 +66,8 @@ void Server::EstablishConnection(int client_fd)
 
 void Server::CloseConnection(int client_fd)
 {
-    std::cout << "Closing connection" << std::endl;
+    Logger::GetInstance().Info("[Server] Closing connection " + std::to_string(client_fd));
+
     epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 
     auto it = _sessions.find(client_fd);
@@ -77,7 +79,12 @@ void Server::CloseConnection(int client_fd)
 
 bool Server::SendMessage(SecureChannel& channel, Message message)
 {
-    return channel.Send(message.Serialize()) != -1;
+    bool success = channel.Send(message.Serialize()) != -1;
+    if (success)
+        Logger::GetInstance().Info("[Server] Sent message: \"" + message.ToString() + "\"");
+    else
+        Logger::GetInstance().Error("[Server] Failed to send message: \"" + message.ToString() + "\"");
+    return success;
 }
 
 bool Server::SendErrorMessage(SecureChannel& channel, std::string content)
@@ -97,8 +104,10 @@ void Server::HandleRequest(int client_fd)
     // Check for secure channel between server and client
     auto it = _sessions.find(client_fd);
     if (it == _sessions.end())
-        //TODO: Error handling
+    {
+        Logger::GetInstance().Info("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
         return;
+    }
 
     // Receive message across secure channel
     Session& session = it->second;
@@ -108,11 +117,12 @@ void Server::HandleRequest(int client_fd)
     {
         if (message.Deserialize(data))
         {
-            std::cout << "[Server] Received: " << message.ToString() << std::endl;
+            Logger::GetInstance().Info("[Server] Received request from host " + std::to_string(client_fd) + " \"" + message.ToString() + "\"");
             HandleMessage(session, message);
         }
         else
         {
+            Logger::GetInstance().Error("[Server] Received malformed request from host " + std::to_string(client_fd));
             SendErrorMessage(session.channel, "Message received failed to deserialize.");
         }
     }

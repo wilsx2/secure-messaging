@@ -1,3 +1,4 @@
+#include "Logger.h"
 #include "ClientSession.h"
 #include "Global.h"
 #include "SecureChannel.h"
@@ -32,13 +33,22 @@ void ClientSession::SendCommand(const std::string& cmd)
 {
     std::vector<std::string> args = ParseCommandArguments(cmd);
     std::optional<Message> message = BuildMessage(args);
-    if (message.has_value())
+    if (message.has_value()) {
+        Logger::GetInstance().Info("[ClientSession] Parsed command: \"" + cmd + "\"");
         SendRequest(message.value());
+    }
+    else
+    {
+        Logger::GetInstance().Error("[ClientSession] Failed to parse command: \"" + cmd + "\"");
+    }
 }
 
 void ClientSession::SendRequest(const Message& msg)
 {
-    _channel.Send(msg.Serialize());
+    if (_channel.Send(msg.Serialize()))
+        Logger::GetInstance().Info("[ClientSession] Sent request: \"" + msg.ToString() + "\"");
+    else
+        Logger::GetInstance().Error("[ClientSession] Failed to send request: \"" + msg.ToString() + "\"");
 }
 
 bool ClientSession::AwaitResponse()
@@ -47,7 +57,8 @@ bool ClientSession::AwaitResponse()
     std::vector<uint8_t> data;
     if (_channel.Receive(data) > 0 && message.Deserialize(data))
     {
-        std::cout << "[Client] Received: " << message.ToString() << std::endl;
+        Logger::GetInstance().Info("[ClientSession] Received response: \"" + message.ToString() + "\"");
+        
         std::optional<std::string> output = HandleMessage(message);
         // TODO: Print from ClientCLI
         // if (output.has_value())

@@ -1,4 +1,5 @@
 #include "SecureChannel.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -39,7 +40,10 @@ bool SecureChannel::EstablishKey(HostType host_type)
     if (host_type == HostType::Client)
     {
         if (_socket.Connect() == -1)
+        {
+            Logger::GetInstance().Error("[Secure Channel] Failed to connect socket");
             return false;
+        }
         _socket.Send(pub.BytePtr(), pub.SizeInBytes(), 0);
         _socket.Receive(pubOther.BytePtr(), pubOther.SizeInBytes(), 0);
     }
@@ -50,7 +54,10 @@ bool SecureChannel::EstablishKey(HostType host_type)
     }
     
     if(!dh.Agree(shared, priv, pubOther))
+    {
+        Logger::GetInstance().Error("[Secure Channel] Diffie-Hellman protocol failed to agree on shared key");
         return false;
+    }
 
     // Key Derivation
     HKDF<SHA256> hkdf;

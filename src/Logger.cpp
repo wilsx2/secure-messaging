@@ -1,9 +1,21 @@
 #include "Logger.h"
 
+Logger Logger::_instance(nullptr, Logger::Level::Trace);
+
 Logger::Logger(std::unique_ptr<LoggingTarget>&& target, Level min_level)
-    : _target(target.release())
+    : _target(std::move(target))
     , _min_level(min_level)
 {}
+
+Logger& Logger::GetInstance()
+{
+    return _instance;
+}
+
+void Logger::SetTarget(std::unique_ptr<LoggingTarget>&& target)
+{
+    _target = std::move(target);
+}
 
 void Logger::SetLevel(Level min_level)
 {
@@ -17,7 +29,7 @@ Logger::Level Logger::GetLevel()
 
 void Logger::Write(Level log_level, const std::string& message)
 {
-    if (log_level < _min_level)
+    if (_target == nullptr || log_level > _min_level)
         return;
     switch (log_level)
     {
@@ -40,10 +52,6 @@ void Logger::Fatal(const std::string& message)
 void Logger::Error(const std::string& message)
 {
     Write(Level::Error, message);
-}
-void Logger::Info(const std::string& message)
-{
-    Write(Level::Info, message);
 }
 void Logger::Warn(const std::string& message)
 {

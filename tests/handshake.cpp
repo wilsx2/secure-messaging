@@ -1,5 +1,7 @@
 #include "Server.h"
 #include "ClientSession.h"
+#include "Logger.h"
+#include "ConsoleLog.h"
 #include <atomic>
 #include <thread>
 
@@ -7,6 +9,9 @@ std::atomic<bool> server_running = false;
 
 int main()
 {
+    auto& logger = Logger::GetInstance();
+    logger.SetTarget(std::make_unique<ConsoleLog>());
+
     std::thread server_thread ([&](){
         Server server;
         server_running = true;
