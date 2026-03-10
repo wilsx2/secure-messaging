@@ -1,0 +1,10 @@
+Request types:
+    register { username, password}
+    login { username, password }
+    list { }
+    chat { to, from, content}
+Response Types
+    failure { what }
+    registered { username }
+    logged in { username }
+    chat { from, content }

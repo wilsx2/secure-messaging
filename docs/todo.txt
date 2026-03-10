@@ -1,0 +1,35 @@
+Security
+[ ] Random Salt
+[ ] RSA/TLS Authentication of Server
+
+Accounts / Authentication
+[ ] Registration and login with passwords
+[ ] Password validation
+[ ] Password file
+[ ] Password hashing
+[ ] Rate limiting
+
+Errors
+[ ] Commit to Error Codes
+[ ] Handle all errors
+[ ] Log all errors
+[ ] Replace CheckSyscall
+
+Networking
+[ ] Handle closed connections on the Client
+[ ] Handle TCP Except
+[ ] Receive Buffer
+[ ] epoll out for handling large messages
+
+Testing
+[ ] Measurably test speed by some valuable metric
+
+Documentation
+[ ] Logging
+    [ ] Format specification
+    [ ] Harness (Tags messages with source class)
+
+Other
+[ ] epoll wrapper class
+[ ] Refactor to combine includes and src in one directory with sub-directories
+[ ] CLI arguments for server address and port
