@@ -1,5 +1,5 @@
 Security
-[ ] Random Salt
+[X] Random Salt
 [ ] RSA/TLS Authentication of Server
 
 Accounts / Authentication

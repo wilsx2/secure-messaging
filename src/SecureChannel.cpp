@@ -36,9 +36,10 @@ bool SecureChannel::EstablishKey(HostType host_type)
     SecByteBlock priv(dh.PrivateKeyLength()), pub(dh.PublicKeyLength()), pubOther(dh.PublicKeyLength());
     dh.GenerateKeyPair(rng, priv, pub);
     SecByteBlock shared(dh.AgreedValueLength());
+    SecByteBlock salt(256);
 
     if (host_type == HostType::Client)
-    {
+    {   
         if (_socket.Connect() == -1)
         {
             Logger::GetInstance().Error("[Secure Channel] Failed to connect socket");
@@ -46,11 +47,15 @@ bool SecureChannel::EstablishKey(HostType host_type)
         }
         _socket.Send(pub.BytePtr(), pub.SizeInBytes(), 0);
         _socket.Receive(pubOther.BytePtr(), pubOther.SizeInBytes(), 0);
+        rng.GenerateBlock(salt.BytePtr(), salt.SizeInBytes());
+        _socket.Send(salt.BytePtr(), salt.SizeInBytes(), 0);
+        
     }
     else // host_type == HostType::Server
     {
         _socket.Receive(pubOther.BytePtr(), pubOther.SizeInBytes(), 0);
         _socket.Send(pub.BytePtr(), pub.SizeInBytes(), 0);
+        _socket.Receive(salt.BytePtr(), salt.SizeInBytes(), 0);
     }
     
     if(!dh.Agree(shared, priv, pubOther))
@@ -62,11 +67,11 @@ bool SecureChannel::EstablishKey(HostType host_type)
     // Key Derivation
     HKDF<SHA256> hkdf;
     byte info[] = "secure messaging";
-    byte salt[] = "salt";
+
     hkdf.DeriveKey(
         _session_key.BytePtr(), _session_key.SizeInBytes(), 
         shared.BytePtr(), shared.SizeInBytes(),
-        salt, strlen((const char*)salt), 
+        salt.BytePtr(), salt.SizeInBytes(), 
         info, strlen((const char*)info)
     );
 

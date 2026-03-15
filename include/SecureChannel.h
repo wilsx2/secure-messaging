@@ -10,6 +10,7 @@ enum class HostType { Client, Server };
 class SecureChannel
 {
     private:
+    static constexpr std::size_t SALT_LEN = 256;
     TcpSocket _socket;
     CryptoPP::SecByteBlock _session_key;
 
