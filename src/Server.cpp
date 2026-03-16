@@ -137,10 +137,37 @@ bool Server::HandleMessage(Session& session, Message message)
     std::optional<std::string> type = message.TryGet("type");
 
          if (type == "login")   return HandleLoginMessage(session, message);
+    else if (type == "register")return HandleRegistrationMessage(session, message);
     else if (type == "chat")    return HandleChatMessage(session, message);
 
     SendErrorMessage(session.channel, "Message of unrecognized or missing type.");
     return false;
+}
+
+
+bool Server::HandleRegistrationMessage(Session& session, Message message)
+{
+    if (!message.Has("username"))
+    {
+        SendErrorMessage(session.channel, "Registration message is missing username.");
+        return false;
+    }
+    if (!message.Has("password"))
+    {
+        SendErrorMessage(session.channel, "Registration message is missing password.");
+        return false;
+    }
+
+    const std::string& username = message.Get("username");
+    if (_accounts.contains(username))
+    {
+        SendErrorMessage(session.channel, "Account already registered.");
+        return false;
+    }
+    _accounts.emplace(username, message.Get("password"));
+
+    message.Set("type", "registered");
+    return SendMessage(session.channel, message);
 }
 
 bool Server::HandleLoginMessage(Session& session, Message message)
@@ -150,11 +177,21 @@ bool Server::HandleLoginMessage(Session& session, Message message)
         SendErrorMessage(session.channel, "Login message is missing username.");
         return false;
     }
+    if (!message.Has("password"))
+    {
+        SendErrorMessage(session.channel, "Login message is missing password.");
+        return false;
+    }
 
     const std::string& username = message.Get("username");
+    if (!_accounts.contains(username) || message.Get("password") != _accounts[username])
+    {
+        SendErrorMessage(session.channel, "Incorrect password or username.");
+        return false;
+    }
     if (_user_to_socket.contains(username))
     {
-        SendErrorMessage(session.channel, "User of that name is already logged in.");
+        SendErrorMessage(session.channel, "A user is already logged in under that account.");
         return false;
     }
 

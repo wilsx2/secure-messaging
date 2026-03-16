@@ -31,6 +31,7 @@ class Server
     ThreadPool _pool;
     std::map<int, Session> _sessions;
     std::map<std::string, int> _user_to_socket;
+    std::map<std::string, std::string> _accounts;
 
     bool SendMessage(SecureChannel& channel, Message message);
     bool SendErrorMessage(SecureChannel& channel, std::string content);
@@ -41,6 +42,7 @@ class Server
 
     void HandleRequest(int client_fd);
     bool HandleMessage(Session& session, Message message);
+    bool HandleRegistrationMessage(Session& session, Message message);
     bool HandleLoginMessage(Session& session, Message message);
     bool HandleChatMessage(Session& session, Message message);
 

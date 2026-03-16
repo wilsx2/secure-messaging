@@ -88,7 +88,16 @@ std::optional<std::string> ClientSession::HandleLoggedInMessage(const Message& m
         return std::nullopt;
     
     _username = message.Get("username");    
-    return std::format("Logged in successfully as {}", _username.value());
+    return std::format("Logged in as \"{}\"", _username.value());
+}
+
+std::optional<std::string> ClientSession::HandleRegisteredMessage(const Message& message)
+{
+    if (message.TryGet("type") != "registered" || !message.Has("username")  || !message.Has("password"))
+        return std::nullopt;
+    
+    _username = message.Get("username");    
+    return std::format("Registered account \"{}\" secured by password \"{}\"", _username.value(), message.Get("password"));
 }
 
 std::optional<std::string> ClientSession::HandleChatMessage(const Message& message)
@@ -127,7 +136,7 @@ std::optional<Message> ClientSession::BuildMessage(const std::vector<std::string
         std::string type = args[0];
 
              if (type == "login")       return BuildLoginMessage(args);
-        // else if (type == "register")    return BuildRegistrationMessage(args);
+        else if (type == "register")    return BuildRegistrationMessage(args);
         // else if (type == "list")        return BuildListActiveMessage(args);
         else if (type == "send")        return BuildChatMessage(args);
         else if (type == "exit")        Disconnect();
@@ -138,17 +147,30 @@ std::optional<Message> ClientSession::BuildMessage(const std::vector<std::string
 
 std::optional<Message> ClientSession::BuildLoginMessage(const std::vector<std::string>& args)
 {
-    if (args.size() != 2 || args[0] != "login")
+    if (args.size() != 3 || args[0] != "login")
         return std::nullopt;
 
     Message message {
         {"type", "login"},
-        {"username", args[1]}
+        {"username", args[1]},
+        {"password", args[2]}
     };
 
     return message;
 }
-// std::optional<Message> ClientSession::BuildRegistrationMessage(const std::vector<std::string>& args);
+std::optional<Message> ClientSession::BuildRegistrationMessage(const std::vector<std::string>& args)
+{
+    if (args.size() != 3 || args[0] != "register")
+        return std::nullopt;
+
+    Message message {
+        {"type", "register"},
+        {"username", args[1]},
+        {"password", args[2]}
+    };
+
+    return message;
+}
 // std::optional<Message> ClientSession::BuildListActiveMessage(const std::vector<std::string>& args);
 std::optional<Message> ClientSession::BuildChatMessage(const std::vector<std::string>& args)
 {

@@ -21,7 +21,9 @@ int main()
     {
         ClientSession client;
         client.Connect();
-        client.SendCommand("login alice");
+        client.SendCommand("register alice fizz");
+        client.AwaitResponse();
+        client.SendCommand("login alice fizz");
         client.AwaitResponse();
         client.SendCommand("send alice love");
         client.AwaitResponse();

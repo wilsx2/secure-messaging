@@ -1,9 +1,9 @@
 Security
 [X] Random Salt
-[ ] RSA/TLS Authentication of Server
+[/] RSA/TLS Authentication of Server
 
 Accounts / Authentication
-[ ] Registration and login with passwords
+[X] Registration and login with passwords
 [ ] Password validation
 [ ] Password file
 [ ] Password hashing
