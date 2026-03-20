@@ -1,4 +1,5 @@
 #include "AccountRegistry.h"
+#include "Logger.h"
 
 int AccountRegistry::ValidateUsername(const std::string& username)
 {
@@ -44,11 +45,16 @@ int AccountRegistry::ValidatePassword(const std::string& password)
 
 int AccountRegistry::Register(const std::string& username, const std::string& password)
 {
+    Logger::GetInstance().Info("[AccountRegistry] Attempting to register \"" + username + "\" with password \"" + password + "\"");
 
     int errors = ValidateUsername(username) | ValidatePassword(password);
     if (errors == static_cast<int>(Error::None))
     {
         _accounts.emplace(username, password);
+    }
+    else
+    {
+        Logger::GetInstance().Error("[AccountRegistery]\n" + ErrorString(errors));
     }
 
     return errors;

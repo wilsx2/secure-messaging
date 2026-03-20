@@ -42,7 +42,7 @@ bool SecureChannel::EstablishKey(HostType host_type)
     {   
         if (_socket.Connect() == -1)
         {
-            Logger::GetInstance().Error("[Secure Channel] Failed to connect socket");
+            Logger::GetInstance().Error("[SecureChannel] Failed to connect socket");
             return false;
         }
         _socket.Send(pub.BytePtr(), pub.SizeInBytes(), 0);
@@ -60,8 +60,11 @@ bool SecureChannel::EstablishKey(HostType host_type)
     
     if(!dh.Agree(shared, priv, pubOther))
     {
-        Logger::GetInstance().Error("[Secure Channel] Diffie-Hellman protocol failed to agree on shared key");
+        Logger::GetInstance().Error("[SecureChannel] Failed to agree on shared key");
         return false;
+    } else {
+        Logger::GetInstance().Info("[SecureChannel] Agreed on shared key");
+
     }
 
     // Key Derivation

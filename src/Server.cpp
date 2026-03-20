@@ -53,15 +53,14 @@ void Server::EstablishConnection(int client_fd)
     Logger::GetInstance().Info("[Server] Establishing connection " + std::to_string(client_fd));
 
     // Create secure session
-    Session session { SecureChannel(client_fd), "", false };
-    session.channel.EstablishKey(HostType::Server);
-    _sessions.emplace(client_fd, std::move(session));
-
-    // Add to epoll
-    epoll_event ev {};
-    ev.events = EPOLLIN | EPOLLET;
-    ev.data.fd = client_fd;
-    epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_fd, &ev); // TODO: Handle errors
+    if (_sessions.CreateSession(client_fd))
+    {
+        // Add to epoll
+        epoll_event ev {};
+        ev.events = EPOLLIN | EPOLLET;
+        ev.data.fd = client_fd;
+        epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_fd, &ev); // TODO: Handle errors
+    }
 }
 
 void Server::CloseConnection(int client_fd)
@@ -70,11 +69,7 @@ void Server::CloseConnection(int client_fd)
 
     epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 
-    auto it = _sessions.find(client_fd);
-    if (it == _sessions.end())
-        return;
-    _user_to_socket.erase(it->second.username);
-    _sessions.erase(client_fd);
+    _sessions.DestroySession(client_fd);
 }
 
 bool Server::SendMessage(SecureChannel& channel, Message message)
@@ -99,18 +94,15 @@ bool Server::SendSuccessMessage(SecureChannel& channel, std::string content)
 
 void Server::HandleRequest(int client_fd)
 {
-    // TODO: Log
-
     // Check for secure channel between server and client
-    auto it = _sessions.find(client_fd);
-    if (it == _sessions.end())
+    if (!_sessions.Has(client_fd))
     {
-        Logger::GetInstance().Info("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
+        Logger::GetInstance().Error("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
         return;
     }
 
     // Receive message across secure channel
-    Session& session = it->second;
+    Session& session = _sessions.Get(client_fd);
     Message message;
     std::vector<uint8_t> data;
     if (session.channel.Receive(data) > 0)
@@ -159,7 +151,7 @@ bool Server::HandleRegistrationMessage(Session& session, Message message)
     }
 
     int error = _accounts.Register(message.Get("username"), message.Get("password"));
-    if (error)
+    if (error != 0)
     {
         SendErrorMessage(session.channel, AccountRegistry::ErrorString(error));
         return false;
@@ -188,15 +180,13 @@ bool Server::HandleLoginMessage(Session& session, Message message)
         SendErrorMessage(session.channel, "Incorrect password or username.");
         return false;
     }
-    if (_user_to_socket.contains(username))
+    if (_sessions.Has(username))
     {
         SendErrorMessage(session.channel, "A user is already logged in under that account.");
         return false;
     }
 
-    session.username = username;
-    session.authenticated = true;
-    _user_to_socket.emplace(username, session.channel.GetSocket().GetFd());
+    _sessions.Authenticate(session.channel.GetSocket().GetFd(), username);
 
     message.Set("type", "logged in");
     return SendMessage(session.channel, message);
@@ -217,17 +207,10 @@ bool Server::HandleChatMessage(Session& session, Message message)
 
     message.Set("from", session.username);
     const std::string& recipient = message.Get("to");
-    auto user_it = _user_to_socket.find(recipient);
-    if (user_it == _user_to_socket.end()) {
+    if (!_sessions.Has(recipient)) {
         SendErrorMessage(session.channel, "Recipient does not exist.");
         return false;
     }
 
-    auto session_it = _sessions.find(user_it->second);
-    if (session_it == _sessions.end()) {
-        SendErrorMessage(session.channel, "Recipient does not exist.");
-        return false;
-    }
-
-    return SendMessage(session_it->second.channel, message);
+    return SendMessage(_sessions.Get(recipient).channel, message);
 }

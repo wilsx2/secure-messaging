@@ -6,19 +6,12 @@
 #include "ThreadPool.h"
 #include "Message.h"
 #include "AccountRegistry.h"
+#include "SessionManager.h"
 #include <vector>
 #include <thread>
 #include <optional>
 #include <array>
 #include <sys/epoll.h>
-
-
-struct Session
-{
-    SecureChannel channel;
-    std::string username;
-    bool authenticated;
-};
 
 class Server
 {
@@ -30,8 +23,7 @@ class Server
     std::array<epoll_event, MAX_EVENTS> _epoll_events;
 
     ThreadPool _pool;
-    std::map<int, Session> _sessions;
-    std::map<std::string, int> _user_to_socket;
+    SessionManager _sessions;
     AccountRegistry _accounts;
 
     void EstablishConnection(int client_fd);
