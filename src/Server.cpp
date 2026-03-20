@@ -158,13 +158,12 @@ bool Server::HandleRegistrationMessage(Session& session, Message message)
         return false;
     }
 
-    const std::string& username = message.Get("username");
-    if (_accounts.contains(username))
+    int error = _accounts.Register(message.Get("username"), message.Get("password"));
+    if (error)
     {
-        SendErrorMessage(session.channel, "Account already registered.");
+        SendErrorMessage(session.channel, AccountRegistry::ErrorString(error));
         return false;
     }
-    _accounts.emplace(username, message.Get("password"));
 
     message.Set("type", "registered");
     return SendMessage(session.channel, message);
@@ -184,7 +183,7 @@ bool Server::HandleLoginMessage(Session& session, Message message)
     }
 
     const std::string& username = message.Get("username");
-    if (!_accounts.contains(username) || message.Get("password") != _accounts[username])
+    if (!_accounts.Contains(username) || message.Get("password") != _accounts.GetPassword(username))
     {
         SendErrorMessage(session.channel, "Incorrect password or username.");
         return false;

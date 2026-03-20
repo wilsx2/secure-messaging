@@ -21,11 +21,11 @@ int main()
     {
         ClientSession client;
         client.Connect();
-        client.SendCommand("register alice fizz");
+        client.SendCommand("register alice_smith fizzBuzz123$");
         client.AwaitResponse();
-        client.SendCommand("login alice fizz");
+        client.SendCommand("login alice_smith fizzBuzz123$");
         client.AwaitResponse();
-        client.SendCommand("send alice love");
+        client.SendCommand("send alice_smith love");
         client.AwaitResponse();
     }
 

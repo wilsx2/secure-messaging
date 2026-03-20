@@ -5,6 +5,7 @@
 #include "SecureChannel.h"
 #include "ThreadPool.h"
 #include "Message.h"
+#include "AccountRegistry.h"
 #include <vector>
 #include <thread>
 #include <optional>
@@ -31,7 +32,7 @@ class Server
     ThreadPool _pool;
     std::map<int, Session> _sessions;
     std::map<std::string, int> _user_to_socket;
-    std::map<std::string, std::string> _accounts;
+    AccountRegistry _accounts;
 
     void EstablishConnection(int client_fd);
     void CloseConnection(int client_fd);
