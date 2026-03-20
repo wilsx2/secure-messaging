@@ -39,7 +39,8 @@ bool Server::HandleEvents()
     {
         Logger::GetInstance().Trace("[Server] Handling event");
         if (_epoll_events[i].data.fd == _socket.GetFd())
-        { // Accept new connection
+        {
+            // Accept new connection
             Logger::GetInstance().Trace("[Server] Event coming from new client");
             int client_fd = _socket.Accept();
             if (client_fd == -1)
@@ -47,7 +48,8 @@ bool Server::HandleEvents()
             EstablishConnection(client_fd);
         }
         else
-        { // Handle request
+        {
+            // Handle request
             Logger::GetInstance().Trace("[Server] Event coming from connected client");
             HandleRequest(_epoll_events[i].data.fd);
         }
@@ -108,6 +110,7 @@ void Server::HandleRequest(int client_fd)
     {
         if (message.Deserialize(data))
         {
+            // Process request and send response
             Logger::GetInstance().Info("[Server] Received request from host " + std::to_string(client_fd) + " \"" + message.ToString() + "\"");
             Message response = HandleMessage(session, message);
             SendMessage(session.channel, response);
@@ -139,19 +142,23 @@ Message Server::HandleRegistrationMessage(Session& session, Message message)
 {
     (void) session; // Unused
 
+    // Validate
     if (!message.HasAll("username", "password"))
         return Message::Error("Registration message is incomplete");
 
+    // Attempt Register
     int error = _accounts.Register(message.Get("username"), message.Get("password"));
     if (error != 0)
         return Message::Error(AccountRegistry::ErrorString(error));
 
+    // Successful Response
     message.Set("type", "registered");
     return message;
 }
 
 Message Server::HandleLoginMessage(Session& session, Message message)
 {
+    // Validate
     if (!message.HasAll("username", "password"))
         return Message::Error("Login message is incomplete");
 
@@ -162,14 +169,17 @@ Message Server::HandleLoginMessage(Session& session, Message message)
     if (_sessions.Has(username))
         return Message::Error("A user is already logged in under that account");
 
+    // Authenticate
     _sessions.Authenticate(session.channel.GetSocket().GetFd(), username);
 
+    // Successful Response
     message.Set("type", "logged in");
     return message;
 }
 
 Message Server::HandleChatMessage(Session& session, Message message)
 {
+    // Validate
     if (!message.HasAll("to", "content"))
         return Message::Error("Chat message is incomplete");
 
@@ -180,9 +190,12 @@ Message Server::HandleChatMessage(Session& session, Message message)
     if (!_sessions.Has(recipient))
         return Message::Error("Recipient does not exist");
 
+    // Attempt Send
     message.Set("from", session.username);
     if (!SendMessage(_sessions.Get(recipient).channel, message))
         return Message::Error("Message failed to send");
 
-    return {{"type", "sent"}, {"to",recipient}};
+    // Successful Response
+    message.Set("type", "sent");
+    return message;
 }
