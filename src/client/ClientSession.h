@@ -1,9 +1,9 @@
 #ifndef CLIENT_SESSION_H
 #define CLIENT_SESSION_H
 
-#include "SecureChannel.h"
-#include "TcpSocket.h"
-#include "Message.h"
+#include "network/SecureChannel.h"
+#include "network/TcpSocket.h"
+#include "network/Message.h"
 #include <optional>
 
 class ClientSession

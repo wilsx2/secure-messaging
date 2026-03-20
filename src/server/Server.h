@@ -1,12 +1,12 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "TcpSocket.h"
-#include "SecureChannel.h"
-#include "ThreadPool.h"
-#include "Message.h"
-#include "AccountRegistry.h"
-#include "SessionManager.h"
+#include "server/AccountRegistry.h"
+#include "server/SessionManager.h"
+#include "network/TcpSocket.h"
+#include "network/SecureChannel.h"
+#include "network/Message.h"
+#include "shared/ThreadPool.h"
 #include <vector>
 #include <thread>
 #include <optional>

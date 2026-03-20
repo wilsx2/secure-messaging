@@ -1,7 +1,7 @@
 #ifndef SESSION_MANAGER_H
 #define SESSION_MANAGER_H
 
-#include "SecureChannel.h"
+#include "network/SecureChannel.h"
 #include <string>
 #include <map>
 

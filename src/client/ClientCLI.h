@@ -1,7 +1,7 @@
 #ifndef CLIENT_CLI_H
 #define CLIENT_CLI_H
 
-#include "ClientSession.h"
+#include "client/ClientSession.h"
 #include <memory>
 #include <thread>
 

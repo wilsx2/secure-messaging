@@ -1,5 +1,5 @@
-#include "SecureChannel.h"
-#include "Logger.h"
+#include "network/SecureChannel.h"
+#include "logging/Logger.h"
 
 #include <iostream>
 #include <stdexcept>

@@ -1,7 +1,7 @@
-#include "Server.h"
-#include "ClientSession.h"
-#include "Logger.h"
-#include "ConsoleLog.h"
+#include "server/Server.h"
+#include "client/ClientSession.h"
+#include "logging/Logger.h"
+#include "logging/ConsoleLog.h"
 #include <atomic>
 #include <thread>
 

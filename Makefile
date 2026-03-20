@@ -1,6 +1,6 @@
 # Directories
 SRC_DIR := src
-INC_DIR := include
+INC_DIR := src
 TEST_DIR := tests
 APP_DIR := apps
 

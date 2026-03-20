@@ -1,5 +1,5 @@
-#include "AccountRegistry.h"
-#include "Logger.h"
+#include "server/AccountRegistry.h"
+#include "logging/Logger.h"
 
 int AccountRegistry::ValidateUsername(const std::string& username)
 {

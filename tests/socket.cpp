@@ -1,5 +1,5 @@
-#include "Global.h"
-#include "TcpSocket.h"
+#include "shared/Global.h"
+#include "network/TcpSocket.h"
 
 int main()
 {

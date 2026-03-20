@@ -1,4 +1,4 @@
-#include "Logger.h"
+#include "logging/Logger.h"
 
 Logger Logger::_instance(nullptr, Logger::Level::Trace);
 

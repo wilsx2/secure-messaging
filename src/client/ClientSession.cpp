@@ -1,8 +1,8 @@
-#include "Logger.h"
-#include "ClientSession.h"
-#include "Global.h"
-#include "SecureChannel.h"
-#include "Message.h"
+#include "client/ClientSession.h"
+#include "network/SecureChannel.h"
+#include "network/Message.h"
+#include "shared/Global.h"
+#include "logging/Logger.h"
 #include <format>
 
 ClientSession::ClientSession()

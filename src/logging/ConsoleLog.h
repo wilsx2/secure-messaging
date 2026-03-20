@@ -1,7 +1,7 @@
 #ifndef CONSOLE_LOG_H
 #define CONSOLE_LOG_H
 
-#include "Logger.h"
+#include "logging/Logger.h"
 
 class ConsoleLog : public LoggingTarget
 {

@@ -1,8 +1,8 @@
-#include "Server.h"
-#include "Global.h"
-#include "Logger.h"
-#include "SecureChannel.h"
-#include "Message.h"
+#include "server/Server.h"
+#include "shared/Global.h"
+#include "logging/Logger.h"
+#include "network/SecureChannel.h"
+#include "network/Message.h"
 Server::Server()
     : _socket(PORT, INADDR_ANY)
     , _epoll_fd(epoll_create1(0)) // TODO: Handle errors

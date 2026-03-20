@@ -1,7 +1,7 @@
 #ifndef SECURE_CHANNEL_H
 #define SECURE_CHANNEL_H
 
-#include "TcpSocket.h"
+#include "network/TcpSocket.h"
 #include <cryptopp/secblock.h>
 #include <vector>
 #include <cstdint>
