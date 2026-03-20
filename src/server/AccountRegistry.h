@@ -9,8 +9,8 @@ class AccountRegistry
 {
     private:
     std::map<std::string, std::string> _accounts;
-    int ValidateUsername(const std::string& username);
-    int ValidatePassword(const std::string& password);
+    int ValidateUsername(const std::string& username) const;
+    int ValidatePassword(const std::string& password) const;
 
     public:
     enum class Error : int {
@@ -30,8 +30,8 @@ class AccountRegistry
     };
     AccountRegistry() = default;
     int Register(const std::string& username, const std::string& password);
-    bool Contains(const std::string& username);
-    std::string GetPassword(const std::string& username);
+    bool Contains(const std::string& username) const;
+    std::string GetPassword(const std::string& username) const;
     static std::string ErrorString(int error);
 
 };

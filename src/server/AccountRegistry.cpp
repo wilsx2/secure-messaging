@@ -1,7 +1,7 @@
 #include "server/AccountRegistry.h"
 #include "logging/Logger.h"
 
-int AccountRegistry::ValidateUsername(const std::string& username)
+int AccountRegistry::ValidateUsername(const std::string& username) const
 {
     int errors = 0;
     if (_accounts.contains(username))
@@ -20,7 +20,7 @@ int AccountRegistry::ValidateUsername(const std::string& username)
     return errors;
 }
 
-int AccountRegistry::ValidatePassword(const std::string& password)
+int AccountRegistry::ValidatePassword(const std::string& password) const
 {
     int errors = 0;
 
@@ -60,14 +60,14 @@ int AccountRegistry::Register(const std::string& username, const std::string& pa
     return errors;
 }
 
-bool AccountRegistry::Contains(const std::string& username)
+bool AccountRegistry::Contains(const std::string& username) const
 {
     return _accounts.contains(username);
 }
 
-std::string AccountRegistry::GetPassword(const std::string& username)
+std::string AccountRegistry::GetPassword(const std::string& username) const
 {
-    return _accounts[username];
+    return _accounts.at(username);
 }
 
 std::string AccountRegistry::ErrorString(int error)
