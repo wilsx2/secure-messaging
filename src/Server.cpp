@@ -219,12 +219,16 @@ bool Server::HandleChatMessage(Session& session, Message message)
     message.Set("from", session.username);
     const std::string& recipient = message.Get("to");
     auto user_it = _user_to_socket.find(recipient);
-    if (user_it == _user_to_socket.end())
+    if (user_it == _user_to_socket.end()) {
+        SendErrorMessage(session.channel, "Recipient does not exist.");
         return false;
+    }
 
     auto session_it = _sessions.find(user_it->second);
-    if (session_it == _sessions.end())
+    if (session_it == _sessions.end()) {
+        SendErrorMessage(session.channel, "Recipient does not exist.");
         return false;
+    }
 
     return SendMessage(session_it->second.channel, message);
 }

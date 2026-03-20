@@ -33,12 +33,12 @@ class Server
     std::map<std::string, int> _user_to_socket;
     std::map<std::string, std::string> _accounts;
 
+    void EstablishConnection(int client_fd);
+    void CloseConnection(int client_fd);
+
     bool SendMessage(SecureChannel& channel, Message message);
     bool SendErrorMessage(SecureChannel& channel, std::string content);
     bool SendSuccessMessage(SecureChannel& channel, std::string content);
-
-    void EstablishConnection(int client_fd);
-    void CloseConnection(int client_fd);
 
     void HandleRequest(int client_fd);
     bool HandleMessage(Session& session, Message message);
