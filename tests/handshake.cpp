@@ -11,6 +11,7 @@ int main()
 {
     auto& logger = Logger::GetInstance();
     logger.SetTarget(std::make_unique<ConsoleLog>());
+    logger.SetLevel(Logger::Level::Info);
 
     std::thread server_thread ([&](){
         Server server;
@@ -19,6 +20,8 @@ int main()
     });
 
     {
+        logger.Debug("Opening client session");
+
         ClientSession client;
         client.Connect();
         client.SendCommand("register alice_smith fizzBuzz123$");
@@ -27,6 +30,9 @@ int main()
         client.AwaitResponse();
         client.SendCommand("send alice_smith love");
         client.AwaitResponse();
+        client.AwaitResponse();
+
+        logger.Debug("Closing client session");
     }
 
     server_running = false;

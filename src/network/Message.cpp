@@ -140,3 +140,8 @@ std::string Message::ToString() const
     }
     return output;
 }
+
+Message Message::Error(const std::string& content)
+{
+    return {{"type", "error"}, {"content", content}};
+}

@@ -30,14 +30,12 @@ class Server
     void CloseConnection(int client_fd);
 
     bool SendMessage(SecureChannel& channel, Message message);
-    bool SendErrorMessage(SecureChannel& channel, std::string content);
-    bool SendSuccessMessage(SecureChannel& channel, std::string content);
 
     void HandleRequest(int client_fd);
-    bool HandleMessage(Session& session, Message message);
-    bool HandleRegistrationMessage(Session& session, Message message);
-    bool HandleLoginMessage(Session& session, Message message);
-    bool HandleChatMessage(Session& session, Message message);
+    Message HandleMessage(Session& session, Message message);
+    Message HandleRegistrationMessage(Session& session, Message message);
+    Message HandleLoginMessage(Session& session, Message message);
+    Message HandleChatMessage(Session& session, Message message);
 
     public:
     Server();

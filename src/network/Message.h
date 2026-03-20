@@ -31,6 +31,8 @@ class Message
     std::vector<uint8_t> Serialize() const;
     bool Deserialize(const std::vector<uint8_t>& data);
     std::string ToString() const;
+
+    static Message Error(const std::string& content);
 };
 
 template<typename... Args>
