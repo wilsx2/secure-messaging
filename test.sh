@@ -4,7 +4,7 @@ total=0
 passed=0
 for tst in build/bin/tests/*; do
     total=$((total + 1))
-    ./$tst &>/dev/null
+    timeout 1s ./$tst &>/dev/null
     exit_status=$?
     result=""
     if [ $exit_status -eq 0 ]; then

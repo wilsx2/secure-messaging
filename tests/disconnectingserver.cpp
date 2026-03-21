@@ -3,10 +3,11 @@
 int main()
 {
     SetTestLog();
-    TestServer ts;
+    Client client;
 
     {
-        Client client;
+        TestServer ts;
+
         client.Connect();
         SendCommand(client, "register " + accounts(0));
         AwaitType(client, "registered");

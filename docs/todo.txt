@@ -32,5 +32,5 @@ Documentation
 
 Other
 [ ] epoll wrapper class
-[ ] Refactor to combine includes and src in one directory with sub-directories
+[X] Refactor to combine includes and src in one directory with sub-directories
 [ ] CLI arguments for server address and port
