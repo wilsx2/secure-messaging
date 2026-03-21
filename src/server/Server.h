@@ -26,6 +26,8 @@ class Server
     SessionManager _sessions;
     AccountRegistry _accounts;
 
+    int _max_requests_per_minute;
+
     void EstablishConnection(int client_fd);
     void CloseConnection(int client_fd);
 

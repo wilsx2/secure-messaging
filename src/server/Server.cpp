@@ -6,6 +6,7 @@
 Server::Server()
     : _socket(PORT, INADDR_ANY)
     , _epoll_fd(epoll_create1(0)) // TODO: Handle errors
+    , _max_requests_per_minute(120)
 {
     _socket.Bind();
     _socket.Listen(1);
@@ -106,19 +107,30 @@ void Server::HandleRequest(int client_fd)
     Message message;
     std::vector<uint8_t> data;
     Logger::GetInstance().Trace("[Server] Receiving data across secure channel");
-    if (channel.Receive(data) > 0)
+    // Check if this is a real request or a request to close the connection
+    if (channel.Receive(data) > 0) // TODO: Replace with peek as to not waste time parsing requests from clients over their rate limit
     {
-        if (message.Deserialize(data))
-        {
-            // Process request and send response
-            Logger::GetInstance().Info("[Server] Received request from host " + std::to_string(client_fd) + " \"" + message.ToString() + "\"");
-            Message response = HandleMessage(client_fd, message);
-            SendMessage(channel, response);
+        // Check against rate limit
+        if (_sessions.GetRequestsLastMinute(client_fd) < _max_requests_per_minute) {
+            _sessions.SubmitRequestTimestamp(client_fd);
+
+            if (message.Deserialize(data))
+            {
+                // Process request and send response
+                Logger::GetInstance().Info("[Server] Received request from host " + std::to_string(client_fd) + " \"" + message.ToString() + "\"");
+                Message response = HandleMessage(client_fd, message);
+                SendMessage(channel, response);
+            }
+            else
+            {
+                Logger::GetInstance().Error("[Server] Received malformed request from host " + std::to_string(client_fd));
+                SendMessage(channel, Message::Error("Message received failed to deserialize"));
+            }
         }
         else
         {
-            Logger::GetInstance().Error("[Server] Received malformed request from host " + std::to_string(client_fd));
-            SendMessage(channel, Message::Error("Message received failed to deserialize"));
+            Logger::GetInstance().Error("[Server] Host " + std::to_string(client_fd) + " is over their rate limit");
+            SendMessage(channel, Message::Error("Exceeded rate limit of " + std::to_string(_max_requests_per_minute) + " requests per minute"));
         }
     }
     else

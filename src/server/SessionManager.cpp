@@ -2,7 +2,7 @@
 
 bool SessionManager::Create(int fd)
 {
-    Session session { SecureChannel(fd), "", false };
+    Session session { SecureChannel(fd), "", false, {}};
 
     bool success = session.channel.EstablishKey(HostType::Server);
     if (success)
@@ -83,4 +83,21 @@ bool SessionManager::Unauthenticate(int fd)
     }
 
     return success;
+}
+
+int SessionManager::GetRequestsLastMinute(int fd)
+{
+    auto& requests = _sessions.at(fd).requests_last_minute;
+    auto current_time = std::chrono::system_clock::now();
+
+    // Purge outdated requests
+    while (requests.size() > 0 && std::chrono::duration_cast<std::chrono::seconds>(current_time - requests.back()) > std::chrono::seconds(60))
+        requests.pop_back();
+
+    // Return updated size
+    return requests.size();
+}
+void SessionManager::SubmitRequestTimestamp(int fd)
+{
+    _sessions.at(fd).requests_last_minute.push_front(std::chrono::system_clock::now());
 }
