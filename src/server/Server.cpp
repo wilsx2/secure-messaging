@@ -163,8 +163,8 @@ Message Server::HandleLoginMessage(Session& session, Message message)
         return Message::Error("Login message is incomplete");
 
     const std::string& username = message.Get("username");
-    if (!_accounts.Contains(username) || message.Get("password") != _accounts.GetPassword(username))
-        return Message::Error("Incorrect password or username.");
+    if (!_accounts.Contains(username) || !_accounts.MatchingPassword(username, message.Get("password")))
+        return Message::Error("Incorrect password or username");
 
     if (_sessions.Has(username))
         return Message::Error("A user is already logged in under that account");

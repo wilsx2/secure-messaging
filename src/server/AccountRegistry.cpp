@@ -1,5 +1,8 @@
 #include "server/AccountRegistry.h"
 #include "logging/Logger.h"
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
 
 int AccountRegistry::ValidateUsername(const std::string& username) const
 {
@@ -43,6 +46,20 @@ int AccountRegistry::ValidatePassword(const std::string& password) const
     return errors;
 }
 
+std::string AccountRegistry::HashPassword(const std::string& password) const
+{
+    std::string digest;
+    CryptoPP::SHA256 hash;
+
+    CryptoPP::StringSource s(password, true, 
+        new CryptoPP::HashFilter(hash,
+            new CryptoPP::HexEncoder(new CryptoPP::StringSink(digest))
+        )
+    );
+
+    return digest;
+}
+
 int AccountRegistry::Register(const std::string& username, const std::string& password)
 {
     Logger::GetInstance().Info("[AccountRegistry] Attempting to register \"" + username + "\" with password \"" + password + "\"");
@@ -50,7 +67,7 @@ int AccountRegistry::Register(const std::string& username, const std::string& pa
     int errors = ValidateUsername(username) | ValidatePassword(password);
     if (errors == static_cast<int>(Error::None))
     {
-        _accounts.emplace(username, password);
+        _accounts.emplace(username, HashPassword(password));
     }
     else
     {
@@ -65,9 +82,11 @@ bool AccountRegistry::Contains(const std::string& username) const
     return _accounts.contains(username);
 }
 
-std::string AccountRegistry::GetPassword(const std::string& username) const
+bool AccountRegistry::MatchingPassword(const std::string& username, const std::string& password) const
 {
-    return _accounts.at(username);
+    if (Contains(username) && _accounts.at(username) == HashPassword(password))
+        return true;
+    return false;
 }
 
 std::string AccountRegistry::ErrorString(int error)
