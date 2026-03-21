@@ -32,10 +32,10 @@ class Server
     bool SendMessage(SecureChannel& channel, Message message);
 
     void HandleRequest(int client_fd);
-    Message HandleMessage(Session& session, Message message);
-    Message HandleRegistrationMessage(Session& session, Message message);
-    Message HandleLoginMessage(Session& session, Message message);
-    Message HandleChatMessage(Session& session, Message message);
+    Message HandleMessage(int client_fd, Message message);
+    Message HandleRegistrationMessage(int client_fd, Message message);
+    Message HandleLoginMessage(int client_fd, Message message);
+    Message HandleChatMessage(int client_fd, Message message);
 
     public:
     Server();

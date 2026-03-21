@@ -5,30 +5,32 @@
 #include <string>
 #include <map>
 
-struct Session
-{
-    SecureChannel channel;
-    std::string username;
-    bool authenticated;
-};
-
 class SessionManager
 {
     private:
+    struct Session
+    {
+        SecureChannel channel;
+        std::string username;
+        bool authenticated;
+    };
     std::map<int, Session> _sessions;
     std::map<std::string, int> _user_to_fd;
     
     public:
     SessionManager() = default;
-    bool CreateSession(int fd);
-    void DestroySession(int fd);
-
-    bool Has(int fd);
-    bool Has(std::string username);
-    Session& Get(int fd);
-    Session& Get(std::string username);
-    bool Authenticate(int fd, std::string username);
+    bool Create(int fd);
+    bool Destroy(int fd);
+    bool IsEstablished(int fd) const;
+    bool IsEstablished(const std::string& username) const;
+    SecureChannel& GetChannel(int fd);
+    SecureChannel& GetChannel(const std::string& username);
+    bool IsAuthenticated(int fd) const;
+    const std::string& GetUsername(int fd) const;
+    bool Authenticate(int fd, const std::string& username);
     bool Unauthenticate(int fd);
+
+    friend Session;
 };
 
 #endif

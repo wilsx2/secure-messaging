@@ -63,7 +63,7 @@ void Server::EstablishConnection(int client_fd)
     Logger::GetInstance().Info("[Server] Establishing connection " + std::to_string(client_fd));
 
     // Create secure session
-    if (_sessions.CreateSession(client_fd))
+    if (_sessions.Create(client_fd))
     {
         // Add to epoll
         epoll_event ev {};
@@ -79,7 +79,7 @@ void Server::CloseConnection(int client_fd)
 
     epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 
-    _sessions.DestroySession(client_fd);
+    _sessions.Destroy(client_fd);
 }
 
 bool Server::SendMessage(SecureChannel& channel, Message message)
@@ -95,30 +95,30 @@ bool Server::SendMessage(SecureChannel& channel, Message message)
 void Server::HandleRequest(int client_fd)
 {
     // Check for secure channel between server and client
-    if (!_sessions.Has(client_fd))
+    if (!_sessions.IsEstablished(client_fd))
     {
         Logger::GetInstance().Error("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
         return;
     }
 
     // Receive message across secure channel
-    Session& session = _sessions.Get(client_fd);
+    SecureChannel& channel = _sessions.GetChannel(client_fd);
     Message message;
     std::vector<uint8_t> data;
     Logger::GetInstance().Trace("[Server] Receiving data across secure channel");
-    if (session.channel.Receive(data) > 0)
+    if (channel.Receive(data) > 0)
     {
         if (message.Deserialize(data))
         {
             // Process request and send response
             Logger::GetInstance().Info("[Server] Received request from host " + std::to_string(client_fd) + " \"" + message.ToString() + "\"");
-            Message response = HandleMessage(session, message);
-            SendMessage(session.channel, response);
+            Message response = HandleMessage(client_fd, message);
+            SendMessage(channel, response);
         }
         else
         {
             Logger::GetInstance().Error("[Server] Received malformed request from host " + std::to_string(client_fd));
-            SendMessage(session.channel, Message::Error("Message received failed to deserialize"));
+            SendMessage(channel, Message::Error("Message received failed to deserialize"));
         }
     }
     else
@@ -127,20 +127,20 @@ void Server::HandleRequest(int client_fd)
     }
 }
 
-Message Server::HandleMessage(Session& session, Message message)
+Message Server::HandleMessage(int client_fd, Message message)
 {
     std::optional<std::string> type = message.TryGet("type");
 
-         if (type == "login")       return HandleLoginMessage(session, message);
-    else if (type == "register")    return HandleRegistrationMessage(session, message);
-    else if (type == "chat")        return HandleChatMessage(session, message);
+         if (type == "login")       return HandleLoginMessage(client_fd, message);
+    else if (type == "register")    return HandleRegistrationMessage(client_fd, message);
+    else if (type == "chat")        return HandleChatMessage(client_fd, message);
     return Message::Error("Message of unrecognized type");
 }
 
 
-Message Server::HandleRegistrationMessage(Session& session, Message message)
+Message Server::HandleRegistrationMessage(int client_fd, Message message)
 {
-    (void) session; // Unused
+    (void) client_fd; // Unused
 
     // Validate
     if (!message.HasAll("username", "password"))
@@ -156,7 +156,7 @@ Message Server::HandleRegistrationMessage(Session& session, Message message)
     return message;
 }
 
-Message Server::HandleLoginMessage(Session& session, Message message)
+Message Server::HandleLoginMessage(int client_fd, Message message)
 {
     // Validate
     if (!message.HasAll("username", "password"))
@@ -166,33 +166,33 @@ Message Server::HandleLoginMessage(Session& session, Message message)
     if (!_accounts.Contains(username) || !_accounts.MatchingPassword(username, message.Get("password")))
         return Message::Error("Incorrect password or username");
 
-    if (_sessions.Has(username))
+    if (_sessions.IsEstablished(username))
         return Message::Error("A user is already logged in under that account");
 
     // Authenticate
-    _sessions.Authenticate(session.channel.GetSocket().GetFd(), username);
+    _sessions.Authenticate(client_fd, username);
 
     // Successful Response
     message.Set("type", "logged in");
     return message;
 }
 
-Message Server::HandleChatMessage(Session& session, Message message)
+Message Server::HandleChatMessage(int client_fd, Message message)
 {
     // Validate
     if (!message.HasAll("to", "content"))
         return Message::Error("Chat message is incomplete");
 
-    if (!session.authenticated)
+    if (!_sessions.IsAuthenticated(client_fd))
         return Message::Error("Sender is unauthenticated");
 
     const std::string& recipient = message.Get("to");
-    if (!_sessions.Has(recipient))
+    if (!_sessions.IsEstablished(recipient))
         return Message::Error("Recipient does not exist");
 
     // Attempt Send
-    message.Set("from", session.username);
-    if (!SendMessage(_sessions.Get(recipient).channel, message))
+    message.Set("from", _sessions.GetUsername(client_fd));
+    if (!SendMessage(_sessions.GetChannel(recipient), message))
         return Message::Error("Message failed to send");
 
     // Successful Response

@@ -1,47 +1,63 @@
 #include "server/SessionManager.h"
 
-bool SessionManager::CreateSession(int fd)
+bool SessionManager::Create(int fd)
 {
     Session session { SecureChannel(fd), "", false };
-    bool successful = session.channel.EstablishKey(HostType::Server);
-    if (successful) _sessions.emplace(fd, std::move(session));
-    return successful;
+
+    bool success = session.channel.EstablishKey(HostType::Server);
+    if (success)
+        _sessions.emplace(fd, std::move(session));
+
+    return success;
 }
-void SessionManager::DestroySession(int fd)
+bool SessionManager::Destroy(int fd)
 {
-    if (Has(fd)) {
-        _user_to_fd.erase(Get(fd).username);
+    bool success = false;
+
+    if (IsEstablished(fd) && IsAuthenticated(fd)) {
+        _user_to_fd.erase(GetUsername(fd));
         _sessions.erase(fd);
+        success = true;
     }
+
+    return success;
 }
 
-bool SessionManager::Has(int fd)
+bool SessionManager::IsEstablished(int fd) const
 {
     return _sessions.find(fd) != _sessions.end();
 }
-bool SessionManager::Has(std::string username)
+bool SessionManager::IsEstablished(const std::string& username) const
 {
-    return _user_to_fd.find(username) != _user_to_fd.end() && Has(_user_to_fd[username]);
+    return _user_to_fd.find(username) != _user_to_fd.end() && IsEstablished(_user_to_fd.at(username));
 }
 
-Session& SessionManager::Get(int fd)
+SecureChannel& SessionManager::GetChannel(int fd)
 {
-    return _sessions.at(fd);
+    return _sessions.at(fd).channel;
 }
-Session& SessionManager::Get(std::string username)
+SecureChannel& SessionManager::GetChannel(const std::string& username)
 {
-    return _sessions.at(_user_to_fd.at(username));
+    return _sessions.at(_user_to_fd.at(username)).channel;
+}
+const std::string& SessionManager::GetUsername(int fd)  const
+{
+    return _sessions.at(fd).username;
+}
+bool SessionManager::IsAuthenticated(int fd) const
+{
+    return _sessions.at(fd).authenticated;
 }
 
-bool SessionManager::Authenticate(int fd, std::string username)
+bool SessionManager::Authenticate(int fd, const std::string& username)
 {
     bool success = false;
     
-    if (Has(fd) && !Has(username))
+    if (IsEstablished(fd) && !IsEstablished(username))
     {
         _user_to_fd.emplace(username, fd);
 
-        auto& session = Get(fd);
+        auto& session = _sessions.at(fd);
         session.username = username;
         session.authenticated = true;
 
@@ -55,9 +71,9 @@ bool SessionManager::Unauthenticate(int fd)
 {
     bool success = false;
 
-    if (Has(fd))
+    if (IsEstablished(fd))
     {
-        auto& session = Get(fd);
+        auto& session = _sessions.at(fd);
         if (session.authenticated)
         {
             session.username = "";
