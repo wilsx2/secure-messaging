@@ -1,5 +1,6 @@
 #include "server/Server.h"
-#include "client/ClientSession.h"
+#include "client/Client.h"
+#include "client/MessageBuilder.h"
 #include "logging/Logger.h"
 #include "logging/ConsoleLog.h"
 #include <atomic>
@@ -22,13 +23,13 @@ int main()
     {
         logger.Debug("Opening client session");
 
-        ClientSession client;
+        Client client;
         client.Connect();
-        client.SendCommand("register alice_smith fizzBuzz123$");
+        client.SendRequest(MessageBuilder::Build("register alice_smith fizzBuzz123$"));
         client.AwaitResponse();
-        client.SendCommand("login alice_smith fizzBuzz123$");
+        client.SendRequest(MessageBuilder::Build("login alice_smith fizzBuzz123$"));
         client.AwaitResponse();
-        client.SendCommand("send alice_smith love");
+        client.SendRequest(MessageBuilder::Build("send alice_smith love"));
         client.AwaitResponse();
         client.AwaitResponse();
 

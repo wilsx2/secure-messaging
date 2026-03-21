@@ -1,4 +1,5 @@
 #include "client/ClientCLI.h"
+#include "client/MessageBuilder.h"
 
 void ClientCLI::Run()
 {
@@ -22,7 +23,16 @@ void ClientCLI::SendLoop()
     while(_session.Connected())
     {
         std::getline(std::cin, input);
-        _session.SendCommand(input);
+
+        if (input.starts_with("exit"))
+        {
+            _session.Disconnect();
+            continue;
+        }
+
+        Message message = MessageBuilder::Build(input);
+        if (message.TryGet("type") != "error")
+            _session.SendRequest(message);
     }
 }
 
