@@ -1,5 +1,6 @@
 #include "client/ClientCLI.h"
 #include "client/MessageBuilder.h"
+#include <format>
 
 void ClientCLI::Run()
 {
@@ -24,15 +25,11 @@ void ClientCLI::SendLoop()
     {
         std::getline(std::cin, input);
 
-        if (input.starts_with("exit"))
-        {
-            _session.Disconnect();
-            continue;
-        }
-
         Message message = MessageBuilder::Build(input);
         if (message.TryGet("type") != "error")
             _session.SendRequest(message);
+        else
+            PrintMessage(message);
     }
 }
 
@@ -40,6 +37,28 @@ void ClientCLI::ReceiveLoop()
 {
     while (_session.Connected())
     {
-        _session.AwaitResponse();
+        Message message = _session.AwaitResponse();
+        PrintMessage(message);
+    }
+}
+
+void ClientCLI::PrintMessage(const Message& message)
+{
+    std::string output = "";
+
+    std::string type = message.Get("type");
+    if (type == "error" && message.Has("content"))
+        output = message.Get("content");
+    else if (type == "registered")
+        output = std::format("Registered account \"{}\"", message.Get("username"));
+    else if (type == "logged in" && message.Has("username"))
+        output = std::format("Logged in as \"{}\"", message.Get("username"));
+    else if (type == "chat" && message.HasAll("from", "content"))
+        output = std::format("[{}] {}", message.Get("from"), message.Get("content"));
+    else if (type == "sent")
+        output = "Sent";
+
+    if (output != "") {
+        std::cout << output << "\n";
     }
 }

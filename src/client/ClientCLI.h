@@ -14,6 +14,7 @@ class ClientCLI
 
     void ReceiveLoop();
     void SendLoop();
+    void PrintMessage(const Message& message);
 
     public:
     ClientCLI() = default;
