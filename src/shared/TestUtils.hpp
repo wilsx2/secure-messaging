@@ -21,7 +21,8 @@ class TestServer
         : _running (true)
         , _worker ([&](){ 
             Server server;
-            while(server.HandleEvents() && _running); 
+            while(server.HandleEvents() || _running) Logger::GetInstance().Trace("[Test Server] Running");
+            Logger::GetInstance().Trace("[Test Server] Finished running");
         }) 
     { }
 

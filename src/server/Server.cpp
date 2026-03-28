@@ -17,7 +17,7 @@ Server::Server()
     ev.data.fd = _socket.GetFd();
     epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _socket.GetFd(), &ev); // TODO: Handle errors
 
-    Logger::GetInstance().Info("[Server] Created");
+    Logger::GetInstance().Info("[Server] Constructed");
 }
 Server::~Server()
 {
@@ -27,15 +27,14 @@ Server::~Server()
 void Server::Run()
 {
     Logger::GetInstance().Info("[Server] Running");
-    while(HandleEvents());
+    while(true) HandleEvents();
 }
 
 bool Server::HandleEvents()
 {
-    int num_events = epoll_wait(_epoll_fd, _epoll_events.data(), MAX_EVENTS, -1);
-    if (num_events < 0)
-        return false;
-
+    Logger::GetInstance().Trace("[Server] Checking epoll event queue");
+    
+    int num_events = epoll_wait(_epoll_fd, _epoll_events.data(), MAX_EVENTS, 100);
     for (int i = 0; i < num_events; ++i)
     {
         Logger::GetInstance().Trace("[Server] Handling event");
@@ -56,7 +55,7 @@ bool Server::HandleEvents()
         }
     }
 
-    return true;
+    return num_events > 0;
 }
 
 void Server::EstablishConnection(int client_fd)

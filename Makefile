@@ -9,6 +9,8 @@ OBJ_DIR := obj
 BIN_DIR := bin
 
 # Files
+## Headers
+HEADERS := $(shell find $(INC_DIR) -name "*.h*") 
 ## Source
 SHARED_SRCS := $(shell find $(SRC_DIR) -name "*.cpp")
 TEST_SRCS := $(shell find $(TEST_DIR) -name "*.cpp")
