@@ -35,7 +35,7 @@ class TestServer
 void SetTestLog()
 {
     Logger::GetInstance().SetTarget(std::make_unique<ConsoleLog>());
-    Logger::GetInstance().SetLevel(Logger::Level::Debug);
+    Logger::GetInstance().SetLevel(Logger::Level::Trace);
 }
 
 void SendCommand(Client& cl, const std::string& co)

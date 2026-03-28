@@ -13,7 +13,7 @@ for tst in build/bin/tests/*; do
     else
         result="Failed"
     fi
-    printf "%-10s : %s\n" ${tst##*/} $result
+    printf "%-20s : %s\n" ${tst##*/} $result
 done
 
 echo "$passed/$total tests passed"

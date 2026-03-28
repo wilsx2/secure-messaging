@@ -15,8 +15,8 @@ class Message
 
     struct WireFormat
     {
-        static constexpr uint16_t MAX_NUM_PAIRS = 1024u;
-        static constexpr uint16_t MAX_STRING_LEN = 1024u;
+        static constexpr uint16_t MAX_NUM_PAIRS = 16u;
+        static constexpr uint32_t MAX_STRING_LEN = UINT32_MAX;
     };
 
     public:

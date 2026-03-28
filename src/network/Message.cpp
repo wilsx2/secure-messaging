@@ -1,4 +1,5 @@
 #include "network/Message.h"
+#include "logging/Logger.h"
 #include <arpa/inet.h> 
 #include <cstring>
 #include <iostream>
@@ -44,12 +45,12 @@ std::vector<uint8_t> Message::Serialize() const
     );
     
     // Store each pair
-    for (const auto& _key_value_pair : _key_values)
+    for (const auto& key_value_pair : _key_values)
     {
-        uint16_t key_len = static_cast<uint16_t>(_key_value_pair.first.size());
-        uint16_t val_len = static_cast<uint16_t>(_key_value_pair.second.size());
-        uint16_t key_len_be = htons(key_len);
-        uint16_t val_len_be = htons(val_len);
+        uint32_t key_len = static_cast<uint32_t>(key_value_pair.first.size());
+        uint32_t val_len = static_cast<uint32_t>(key_value_pair.second.size());
+        uint32_t key_len_be = htonl(key_len);
+        uint32_t val_len_be = htonl(val_len);
 
         // Store lengths
         bytes.insert(
@@ -66,13 +67,13 @@ std::vector<uint8_t> Message::Serialize() const
         // Store content
         bytes.insert(
             bytes.end(), 
-            _key_value_pair.first.begin(),
-            _key_value_pair.first.end()
+            key_value_pair.first.begin(),
+            key_value_pair.first.end()
         );
         bytes.insert(
             bytes.end(), 
-            _key_value_pair.second.begin(),
-            _key_value_pair.second.end()
+            key_value_pair.second.begin(),
+            key_value_pair.second.end()
         );
     }
 
@@ -81,6 +82,8 @@ std::vector<uint8_t> Message::Serialize() const
 
 bool Message::Deserialize(const std::vector<uint8_t>& bytes)
 {
+    Logger::GetInstance().Trace("[Message] Beginning deserialization");
+
     uint32_t curr = 0;
     std::map<std::string, std::string> key_values;
 
@@ -92,6 +95,8 @@ bool Message::Deserialize(const std::vector<uint8_t>& bytes)
     num_pairs = ntohs(num_pairs_be);
     curr += sizeof(num_pairs_be);
 
+    Logger::GetInstance().Trace("[Message] Expecting pairs of count " + std::to_string(num_pairs));
+
     // Check pair size
     if (num_pairs > WireFormat::MAX_NUM_PAIRS)
         return false;
@@ -99,15 +104,15 @@ bool Message::Deserialize(const std::vector<uint8_t>& bytes)
     // Read each pair
     for (uint16_t i = 0; i < num_pairs; ++i) {
         // Read string sizes
-        uint16_t key_len, val_len, key_len_be, val_len_be;
+        uint32_t key_len, val_len, key_len_be, val_len_be;
         if (curr + sizeof(key_len) + sizeof(val_len) > bytes.size())
             return false;
         
         std::memcpy(&key_len_be, &bytes[curr], sizeof(key_len_be));
-        key_len = ntohs(key_len_be);
+        key_len = ntohl(key_len_be);
         curr += sizeof(key_len);
         std::memcpy(&val_len_be, &bytes[curr], sizeof(val_len_be));
-        val_len = ntohs(val_len_be);
+        val_len = ntohl(val_len_be);
         curr += sizeof(val_len);
         
         // Read string contents
@@ -136,7 +141,11 @@ std::string Message::ToString() const
     {
         if (output.size() > 0)
             output += " | ";
-        output += pair.first + ":" + pair.second;
+        output += pair.first + ":";
+        if (pair.second.size() < 32)
+            output += pair.second;
+        else
+            output += pair.second.substr(0,30) + "...";
     }
     return output;
 }

@@ -32,7 +32,7 @@ class TcpSocket
     int Listen(int backlog);
     int Accept();
     int Send(const void* data, std::size_t size, int flags);
-    // TODO: SendAll();
+    int SendAll(const void* data, std::size_t size);
     int SendBytes(const std::vector<uint8_t>& bytes);
     int Receive(void* data, std::size_t size, int flags);
     int ReceiveAll(void* data, std::size_t size);

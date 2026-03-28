@@ -14,7 +14,7 @@ int main()
         AwaitType(client, "registered");
         SendCommand(client, "login " + accounts(0));
         AwaitType(client, "logged in");
-        SendCommand(client, "send " + usernames[0] + " " + hamlet);
+        client.SendRequest({{"type","chat"}, {"to",usernames[0]}, {"content", hamlet}});
         AwaitType(client, "chat");
         AwaitType(client, "sent");
     }

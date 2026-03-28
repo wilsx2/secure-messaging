@@ -97,12 +97,31 @@ int TcpSocket::Send(const void* data, std::size_t size, int flags)
     return success;
 }
 
+int TcpSocket::SendAll(const void* data, std::size_t size)
+{   
+    std::size_t total_sent = 0;
+
+    while (total_sent < size)
+    {
+        std::size_t last_sent = Send(
+            reinterpret_cast<const uint8_t*>(data) + total_sent,
+            size - total_sent,
+            0
+        );
+        if (last_sent <= 0)
+            return -1;
+        total_sent += last_sent;
+    }
+
+    return total_sent;
+}
+
 int TcpSocket::SendBytes(const std::vector<uint8_t>& bytes)
 {
     std::size_t message_len = bytes.size();
-    if (Send(&message_len, sizeof(message_len), 0) < 0)
+    if (SendAll(&message_len, sizeof(message_len)) < 0)
         return -1;
-    return Send(bytes.data(), message_len, 0);
+    return SendAll(bytes.data(), message_len);
 }
 
 int TcpSocket::Receive(void* data, std::size_t size, int flags)
