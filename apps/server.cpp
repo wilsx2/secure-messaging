@@ -1,6 +1,6 @@
-#include "server/Server.h"
-#include "logging/Logger.h"
-#include "logging/ConsoleLog.h"
+#include "Server/Server.h"
+#include "Logging/Logger.h"
+#include "Logging/ConsoleLog.h"
 
 int main()
 {

@@ -1,0 +1,9 @@
+networking: Abstractions over sockets and epoll functions.
+messaging:
+	interfaces: A ROS2 interfaces like system which supports serialization and deserialization from both binary and string encoding formats. Should work for config files as well.
+	publish-subscribe: ?Facilities to send and receive messages, discriminating behavior to particular functions?
+cryptography: Facilities to handle key agreement, and using keys to decrypt and encrypt data.
+database: Wrapper around SQLite
+(t)ui: Wrapper around ncurses 
+threading: ThreadPool, potentially sync wrapper class
+logging

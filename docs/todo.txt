@@ -5,12 +5,12 @@ Security
 Accounts / Authentication
 [X] Registration and login with passwords
 [X] Password validation
-[ ] Password file
-[ ] Password policy mutability
+[ ] *Password file
+[ ] *Password policy mutability
 [X] Password hashing
 [X] Naive Rate limiting
 [ ] ? Rate Limiting Rule System
-[ ] Delete / Rename / Change Password
+[ ] *Delete / Rename / Change Password
 
 Errors
 [ ] Commit to Error Codes
@@ -19,13 +19,13 @@ Errors
 [ ] Replace CheckSyscall
 
 Networking
-[ ] Handle closed connections on the Client
+[X] Handle closed connections on the Client
 [ ] Handle TCP Except
 [ ] Receive Buffer
 [ ] epoll out for handling large messages
 
 Testing
-[ ] Measurably test speed by some valuable metric
+[ ] *Measurably test speed by some valuable metric
 
 Documentation
 [ ] Logging
@@ -35,5 +35,5 @@ Documentation
 Other
 [ ] epoll wrapper class
 [X] Refactor to combine includes and src in one directory with sub-directories
-[ ] CLI arguments for server address and port
-[ ] Config rate limit, log file location, port, password policy, etc on server side
+[ ] *CLI arguments for server address and port
+[ ] *Config rate limit, log file location, port, password policy, etc on server side

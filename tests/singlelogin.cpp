@@ -1,4 +1,4 @@
-#include "shared/TestUtils.hpp"
+#include "Shared/TestUtils.hpp"
 
 int main()
 {
