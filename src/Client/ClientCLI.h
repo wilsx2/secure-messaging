@@ -1,5 +1,4 @@
-#ifndef CLIENT_CLI_H
-#define CLIENT_CLI_H
+#pragma once
 
 #include "Client/Client.h"
 #include <memory>
@@ -21,5 +20,3 @@ class ClientCLI
     ~ClientCLI() = default;
     void Run();
 };
-
-#endif

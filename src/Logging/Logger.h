@@ -1,5 +1,5 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#pragma once
+
 #include <memory>
 #include <string>
 
@@ -32,5 +32,3 @@ class Logger
     void Debug(const std::string& message);
     void Trace(const std::string& message);
 };
-
-#endif

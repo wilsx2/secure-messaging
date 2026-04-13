@@ -1,5 +1,4 @@
-#ifndef MESSAGE_BUILDER_H
-#define MESSAGE_BUILDER_H
+#pragma once
 
 #include "Network/Message.h"
 
@@ -17,5 +16,3 @@ class MessageBuilder
     MessageBuilder() = delete;
     static Message Build(const std::string& command);
 };
-
-#endif

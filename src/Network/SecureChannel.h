@@ -1,5 +1,4 @@
-#ifndef SECURE_CHANNEL_H
-#define SECURE_CHANNEL_H
+#pragma once
 
 #include "Network/TcpSocket.h"
 #include <cryptopp/secblock.h>
@@ -22,5 +21,3 @@ class SecureChannel
     int Receive(std::vector<uint8_t>& message);
     const TcpSocket& GetSocket();
 };
-
-#endif

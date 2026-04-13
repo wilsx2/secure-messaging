@@ -1,5 +1,4 @@
-#ifndef CLIENT_SESSION_H
-#define CLIENT_SESSION_H
+#pragma once
 
 #include "Network/SecureChannel.h"
 #include "Network/TcpSocket.h"
@@ -27,5 +26,3 @@ class Client
     Message AwaitResponse();
     // TODO: std::optional<Message> TryResponse();
 };
-
-#endif

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Server/Server.h"
 #include "Client/Client.h"
 #include "Client/Client.h"

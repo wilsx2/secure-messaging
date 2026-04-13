@@ -1,5 +1,4 @@
-#ifndef TCP_SOCKET_H
-#define TCP_SOCKET_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -41,5 +40,3 @@ class TcpSocket
     struct sockaddr_in GetAddr() const;
     int GetFd() const;
 };
-
-#endif

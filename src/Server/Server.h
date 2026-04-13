@@ -1,5 +1,4 @@
-#ifndef SERVER_H
-#define SERVER_H
+#pragma once
 
 #include "Server/AccountRegistry.h"
 #include "Server/SessionManager.h"
@@ -45,5 +44,3 @@ class Server
     void Run();
     bool HandleEvents();
 };
-
-#endif

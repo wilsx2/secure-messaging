@@ -1,6 +1,3 @@
-#ifndef GLOBAL_H
-#define GLOBAL_H
+#pragma once
 
 constexpr int PORT = 5555;
-
-#endif

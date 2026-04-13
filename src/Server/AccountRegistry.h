@@ -1,5 +1,4 @@
-#ifndef ACCOUNT_REGISTRY_H
-#define ACCOUNT_REGISTRY_H
+#pragma once
 
 #include <map>
 #include <string>
@@ -39,5 +38,3 @@ class AccountRegistry
     static std::string ErrorString(int error);
 
 };
-
-#endif

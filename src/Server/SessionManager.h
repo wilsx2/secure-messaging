@@ -1,5 +1,4 @@
-#ifndef SESSION_MANAGER_H
-#define SESSION_MANAGER_H
+#pragma once
 
 #include "Network/SecureChannel.h"
 #include <string>
@@ -45,5 +44,3 @@ class SessionManager
 
     friend Session;
 };
-
-#endif

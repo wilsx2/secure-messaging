@@ -1,5 +1,4 @@
-#ifndef MESSAGE_H
-#define MESSAGE_H
+#pragma once
 
 #include <cstdint>
 #include <initializer_list>
@@ -40,5 +39,3 @@ bool Message::HasAll(const Args&... keys) const
 {
     return (Has(keys) && ...);
 }
-
-#endif
