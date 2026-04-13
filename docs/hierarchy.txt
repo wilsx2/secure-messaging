@@ -1,9 +1,33 @@
-networking: Abstractions over sockets and epoll functions.
-messaging:
-	interfaces: A ROS2 interfaces like system which supports serialization and deserialization from both binary and string encoding formats. Should work for config files as well.
-	publish-subscribe: ?Facilities to send and receive messages, discriminating behavior to particular functions?
-cryptography: Facilities to handle key agreement, and using keys to decrypt and encrypt data.
-database: Wrapper around SQLite
-(t)ui: Wrapper around ncurses 
-threading: ThreadPool, potentially sync wrapper class
-logging
+Networking (potentially OS agnostic)
+	TcpSocket: Wrapper around low level sockets
+	TcpMultiplexer: Wrapper around low level epoll (potentially wepoll)
+Messaging
+	Serialize<T>(bytes): Append T as byte data. Must be implemented for non trivially copiable types. Must append type ID.
+	Deserialize<T>(bytes): Get T from byte data. Must be implemented for non trivially copiable types. Validates type ID.
+	Serialize<str>(): Implementation for string. Prepends size.
+	Deserialize<str>(): Implementation for string. Uses prepended size.
+	CallbackDiscriminator: Maps parameter types to function callbacks
+		Register<T>(func): Curries the function inside one which deserializes bytes into T and then calls the original. Adds to list of callbacks
+		Call(bytes): Uses type ID appended in Serialize to find and call with the matching function
+Cryptography (depends on CryptoPP)
+	Hash(): Produces output hash from input
+	SecureKey: Stores a byte key. Can be used to encrypt and decrypt bytes.
+	DiffieHelman: Handles key agreement
+Database (depends on SQLite): Wrapper
+Tui (depends on ncurses): Wrapper
+Threading
+	ThreadPool
+	? Synchronous<T>: Wrapper around T which creates a mutex
+Logging
+	Logger: Target agnostic
+	ConsoleLog: Target
+	FileLog: Target
+Shared: Stores requests, responses, and default ports
+Client
+	Client: Maintains secure connection with server. Sends requests and received responses.
+	ClientCLI
+	ClientTUI
+Server
+	Server:
+		Accepts connections from a TcpSocket and adds them to a TcpMultiplexer with secure keys.
+		Decrypts requests, uses CallbackDiscriminator to run relevant Database commands, and sends back encrypted responses.
