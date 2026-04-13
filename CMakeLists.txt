@@ -17,12 +17,19 @@ set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 FetchContent_MakeAvailable(cryptopp)
 
-set(CRYPTOPP_LIB_DIR "${cryptopp_SOURCE_DIR}")
 add_library(cryptopp STATIC IMPORTED)
 set_target_properties(cryptopp PROPERTIES
-    IMPORTED_LOCATION "${CRYPTOPP_LIB_DIR}/libcryptopp.a"
-    INTERFACE_INCLUDE_DIRECTORIES "${CRYPTOPP_LIB_DIR}"
+    IMPORTED_LOCATION "${cryptopp_SOURCE_DIR}/libcryptopp.a"
+    INTERFACE_INCLUDE_DIRECTORIES "${cryptopp_SOURCE_DIR}"
 )
+
+add_custom_command(
+    OUTPUT ${cryptopp_SOURCE_DIR}/libcryptopp.a
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${cryptopp_SOURCE_DIR} static
+    COMMENT "Building CryptoPP library"
+    VERBATIM
+)
+add_custom_target(build_cryptopp ALL DEPENDS ${cryptopp_SOURCE_DIR}/libcryptopp.a)
 
 # Add Targets Libraries
 add_subdirectory(src/)
