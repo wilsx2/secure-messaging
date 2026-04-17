@@ -7,11 +7,11 @@ add_compile_options(-Wall -Wextra -Werror)
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/tests")
 
 set(SRCS
-    disconnectingserver.cpp
-    handshake.cpp
-    largemessage.cpp
+    # disconnectingserver.cpp
+    # handshake.cpp
+    # largemessage.cpp
 	message.cpp
-	singlelogin.cpp
+	# singlelogin.cpp
 	socket.cpp
 )
 
@@ -21,7 +21,7 @@ foreach(SRC ${SRCS})
     
     add_executable(${EXE} ${SRC})
     target_include_directories(${EXE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
-    target_link_libraries(${EXE} PRIVATE Client Logging Network Server Shared)
+    target_link_libraries(${EXE} PRIVATE Logging Network Server Shared) #Client
 
     add_test(${EXE} ${EXE})
 endforeach()

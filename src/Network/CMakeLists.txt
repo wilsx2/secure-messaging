@@ -1,8 +1,8 @@
 project(Network)
 
 add_library(Network STATIC
-    Message.cpp
     SecureChannel.cpp
+    Serialization.cpp
     TcpSocket.cpp
 )
 

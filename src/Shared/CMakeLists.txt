@@ -1,8 +1,8 @@
 project(Shared)
 
-file(GLOB_RECURSE SRCS "*.cpp")
-
-add_library(Shared STATIC ${SRCS})
+add_library(Shared STATIC
+    ThreadPool.cpp
+)
 
 target_include_directories(Shared PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
@@ -12,7 +12,7 @@ set_target_properties(Shared PROPERTIES
 )
 
 target_link_libraries(Shared PRIVATE
-    Client
+    # Client
     Logging
     Network
     Server

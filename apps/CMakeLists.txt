@@ -6,8 +6,8 @@ add_compile_options(-Wall -Wextra -Werror)
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/apps")
 
 set(SRCS
-    client.cpp
-    server.cpp
+    #client.cpp
+    #server.cpp
 )
 
 foreach(SRC ${SRCS})
@@ -15,5 +15,5 @@ foreach(SRC ${SRCS})
     
     add_executable(${EXE} ${SRC})
     target_include_directories(${EXE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
-    target_link_libraries(${EXE} PRIVATE Client Logging Network Server Shared)
+    target_link_libraries(${EXE} PRIVATE Logging Network Server Shared) #Client
 endforeach()

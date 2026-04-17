@@ -2,7 +2,7 @@ project(Server)
 
 add_library(Server STATIC
     AccountRegistry.cpp
-    Server.cpp
+    # Server.cpp
     SessionManager.cpp
 )
 

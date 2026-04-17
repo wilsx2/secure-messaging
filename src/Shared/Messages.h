@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Messaging/Message.h"
+#include "Network/Message.h"
 
 struct Login : public Message
 {
