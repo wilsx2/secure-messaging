@@ -1,0 +1,222 @@
+#include "Shared/Messages.h"
+#include "Network/Serialization.h"
+
+bool Login::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<Login>();
+    uint64_t username_size = username.size();
+    uint64_t password_size = password.size();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&id, sizeof(id))
+        && writer.Write(&username_size, sizeof(username_size))
+        && writer.Write(username.data(), username_size)
+        && writer.Write(&password_size, sizeof(password_size))
+        && writer.Write(password.data(), password_size);
+}
+bool Login::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+    uint64_t username_size;
+    uint64_t password_size;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<Login>()
+        && reader.Read(&id, sizeof(id))
+        && reader.Read(&username_size, sizeof(username_size))
+        && (username.resize(username_size), reader.Read(username.data(), username_size))
+        && reader.Read(&password_size, sizeof(password_size))
+        && (password.resize(password_size), reader.Read(password.data(), password_size));
+}
+
+bool Register::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<Register>();
+    uint64_t username_size = username.size();
+    uint64_t password_size = password.size();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&id, sizeof(id))
+        && writer.Write(&username_size, sizeof(username_size))
+        && writer.Write(username.data(), username_size)
+        && writer.Write(&password_size, sizeof(password_size))
+        && writer.Write(password.data(), password_size);
+}
+bool Register::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+    uint64_t username_size;
+    uint64_t password_size;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<Register>()
+        && reader.Read(&id, sizeof(id))
+        && reader.Read(&username_size, sizeof(username_size))
+        && (username.resize(username_size), reader.Read(username.data(), username_size))
+        && reader.Read(&password_size, sizeof(password_size))
+        && (password.resize(password_size), reader.Read(password.data(), password_size));
+}
+
+bool DeleteAccount::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<DeleteAccount>();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&id, sizeof(id));
+}
+bool DeleteAccount::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<DeleteAccount>()
+        && reader.Read(&id, sizeof(id));
+}
+
+bool ChangePassword::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<ChangePassword>();
+    uint64_t new_password_size = new_password.size();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&id, sizeof(id))
+        && writer.Write(&new_password_size, sizeof(new_password_size))
+        && writer.Write(new_password.data(), new_password_size);
+}
+bool ChangePassword::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+    uint64_t new_password_size;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<ChangePassword>()
+        && reader.Read(&id, sizeof(id))
+        && reader.Read(&new_password_size, sizeof(new_password_size))
+        && (new_password.resize(new_password_size), reader.Read(new_password.data(), new_password_size));
+}
+
+bool ActiveUsers::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<ActiveUsers>();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&id, sizeof(id));
+}
+bool ActiveUsers::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<ActiveUsers>()
+        && reader.Read(&id, sizeof(id));
+}
+
+bool SendChat::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<Register>();
+    uint64_t from_size = from.size();
+    uint64_t to_size = to.size();
+    uint64_t content_size = content.size();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&id, sizeof(id))
+        && writer.Write(&from_size, sizeof(from_size))
+        && writer.Write(from.data(), from_size)
+        && writer.Write(&to_size, sizeof(to_size))
+        && writer.Write(to.data(), to_size)
+        && writer.Write(&content_size, sizeof(content_size))
+        && writer.Write(content.data(), content_size);
+}
+bool SendChat::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+    uint64_t from_size;
+    uint64_t to_size;
+    uint64_t content_size;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<Register>()
+        && reader.Read(&id, sizeof(id))
+        && reader.Read(&from_size, sizeof(from_size))
+        && (from.resize(from_size), reader.Read(from.data(), from_size))
+        && reader.Read(&to_size, sizeof(to_size))
+        && (to.resize(to_size), reader.Read(to.data(), to_size))
+        && reader.Read(&content_size, sizeof(content_size))
+        && (content.resize(content_size), reader.Read(content.data(), content_size));
+}
+
+bool Status::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<Status>();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&request_id, sizeof(request_id))
+        && writer.Write(&successful, sizeof(successful));
+}
+bool Status::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<Status>()
+        && reader.Read(&request_id, sizeof(request_id))
+        && reader.Read(&successful, sizeof(successful));
+}
+
+bool StringList::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<StringList>();
+    uint64_t list_size = value.size();
+
+    ByteWriter writer(bytes);
+    if (!(writer.Write(&type_hash, sizeof(type_hash)))
+    ||  !(writer.Write(&request_id, sizeof(request_id)))
+    ||  !(writer.Write(&list_size, sizeof(list_size))))
+        return false;
+
+    for (auto& string : value)
+    {
+        uint64_t string_size = string.length();
+        if ((!writer.Write(&string_size, sizeof(string_size))
+        ||  (!writer.Write(string.data(), string_size))))
+            return false;
+    }
+    return true;
+}
+bool StringList::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+    uint64_t list_size;
+    uint64_t string_size;
+
+    ByteReader reader(bytes);
+    if (!reader.Read(&type_hash, sizeof(type_hash))
+    ||  type_hash != Message::GetTypeHash<StringList>()
+    ||  !reader.Read(&request_id, sizeof(request_id))
+    ||  !reader.Read(&list_size, sizeof(list_size)))
+        return false;
+    
+    value.resize(list_size);
+    for (auto& string : value)
+    {
+        if (!reader.Read(&string_size, sizeof(string_size))
+        ||  (string.resize(string_size), !reader.Read(string.data(), string_size)))
+            return false;
+    }
+
+    return true;
+}
