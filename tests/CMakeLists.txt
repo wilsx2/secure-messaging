@@ -10,7 +10,7 @@ set(SRCS
     # disconnectingserver.cpp
     # handshake.cpp
     # largemessage.cpp
-	message.cpp
+	messages.cpp
 	# singlelogin.cpp
 	socket.cpp
 )

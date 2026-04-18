@@ -1,6 +1,7 @@
 project(Shared)
 
 add_library(Shared STATIC
+    Messages.cpp
     ThreadPool.cpp
 )
 
