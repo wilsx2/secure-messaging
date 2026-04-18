@@ -74,14 +74,25 @@ struct SendChat : public Message
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
-struct Status : public Message
+struct Success : public Message
 {
     uint64_t request_id;
-    bool successful;
 
-    Status() = default;
-    Status(uint64_t request_id, bool successful)
-        : request_id(request_id), successful(successful) { }
+    Success() = default;
+    Success(uint64_t request_id)
+        : request_id(request_id) { }
+    bool Serialize(std::vector<uint8_t>& bytes);
+    bool Deserialize(const std::vector<uint8_t>& bytes);
+};
+
+struct Failure : public Message
+{
+    uint64_t request_id;
+    std::string what;
+
+    Failure() = default;
+    Failure(uint64_t request_id, std::string what)
+        : request_id(request_id), what(what) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };

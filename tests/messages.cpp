@@ -38,13 +38,18 @@ int main()
         assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id && a.to == b.to && a.from == b.from && a.content == b.content);
     }
     {
-        Status a (7, true);    
-        Status b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.request_id && b.request_id && a.successful == b.successful);
+        Success a (7);    
+        Success b;
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.request_id == b.request_id);
+    }
+    {
+        Failure a (8, "Fizz");    
+        Failure b;
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.request_id == b.request_id && a.what == b.what);
     }
     {
         std::vector<std::string> strings {"Snap", "Crackle", "Pop"};
-        StringList a (8, std::move(strings));    
+        StringList a (9, std::move(strings));    
         StringList b;
 
         assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.request_id == b.request_id && a.value == b.value);

@@ -157,24 +157,46 @@ bool SendChat::Deserialize(const std::vector<uint8_t>& bytes)
         && (content.resize(content_size), reader.Read(content.data(), content_size));
 }
 
-bool Status::Serialize(std::vector<uint8_t>& bytes)
+bool Success::Serialize(std::vector<uint8_t>& bytes)
 {
-    uint64_t type_hash = Message::GetTypeHash<Status>();
+    uint64_t type_hash = Message::GetTypeHash<Success>();
 
     ByteWriter writer(bytes);
     return writer.Write(&type_hash, sizeof(type_hash))
-        && writer.Write(&request_id, sizeof(request_id))
-        && writer.Write(&successful, sizeof(successful));
+        && writer.Write(&request_id, sizeof(request_id));
 }
-bool Status::Deserialize(const std::vector<uint8_t>& bytes)
+bool Success::Deserialize(const std::vector<uint8_t>& bytes)
 {
     uint64_t type_hash;
 
     ByteReader reader(bytes);
     return reader.Read(&type_hash, sizeof(type_hash))
-        && type_hash == Message::GetTypeHash<Status>()
+        && type_hash == Message::GetTypeHash<Success>()
+        && reader.Read(&request_id, sizeof(request_id));
+}
+
+bool Failure::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash = Message::GetTypeHash<Success>();
+    uint64_t what_size = what.size();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_hash, sizeof(type_hash))
+        && writer.Write(&request_id, sizeof(request_id))
+        && writer.Write(&what_size, sizeof(what_size))
+        && writer.Write(what.data(), what_size);
+}
+bool Failure::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint64_t type_hash;
+    uint64_t what_size;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_hash, sizeof(type_hash))
+        && type_hash == Message::GetTypeHash<Success>()
         && reader.Read(&request_id, sizeof(request_id))
-        && reader.Read(&successful, sizeof(successful));
+        && reader.Read(&what_size, sizeof(what_size))
+        && (what.resize(what_size), reader.Read(what.data(), what_size));
 }
 
 bool StringList::Serialize(std::vector<uint8_t>& bytes)
