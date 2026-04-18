@@ -10,7 +10,7 @@
 struct Message
 {
     // Interface
-    virtual std::vector<uint8_t> Serialize() = 0;
+    virtual bool Serialize(std::vector<uint8_t>& bytes) = 0;
     virtual bool Deserialize(const std::vector<uint8_t>& bytes) = 0;
 
     // Static helper functions

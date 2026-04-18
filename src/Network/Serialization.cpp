@@ -24,8 +24,8 @@ bool ByteReader::Read(void* value, uint64_t size)
     return success;
 }
 
-ByteWriter::ByteWriter(uint64_t size)
-    : _bytes(size), _start(0)
+ByteWriter::ByteWriter(std::vector<uint8_t>& bytes)
+    : _bytes(bytes), _start(0)
 { }
 bool ByteWriter::Write(void*const value, uint64_t size)
 {
@@ -38,8 +38,4 @@ bool ByteWriter::Write(void*const value, uint64_t size)
     }
 
     return success;
-}
-std::vector<uint8_t>&& ByteWriter::Move()
-{
-    return std::move(_bytes);
 }

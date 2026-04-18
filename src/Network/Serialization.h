@@ -18,11 +18,10 @@ class ByteReader
 class ByteWriter
 {
     private:
-    std::vector<uint8_t> _bytes;
+    std::vector<uint8_t>& _bytes;
     uint64_t _start;
 
     public:
-    ByteWriter(uint64_t size);
+    ByteWriter(std::vector<uint8_t>& bytes);
     bool Write(void*const value, uint64_t size);
-    std::vector<uint8_t>&& Move();
 };
