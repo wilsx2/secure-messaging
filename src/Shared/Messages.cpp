@@ -177,7 +177,7 @@ bool Success::Deserialize(const std::vector<uint8_t>& bytes)
 
 bool Failure::Serialize(std::vector<uint8_t>& bytes)
 {
-    uint64_t type_hash = Message::GetTypeHash<Success>();
+    uint64_t type_hash = Message::GetTypeHash<Failure>();
     uint64_t what_size = what.size();
 
     ByteWriter writer(bytes);
@@ -193,7 +193,7 @@ bool Failure::Deserialize(const std::vector<uint8_t>& bytes)
 
     ByteReader reader(bytes);
     return reader.Read(&type_hash, sizeof(type_hash))
-        && type_hash == Message::GetTypeHash<Success>()
+        && type_hash == Message::GetTypeHash<Failure>()
         && reader.Read(&request_id, sizeof(request_id))
         && reader.Read(&what_size, sizeof(what_size))
         && (what.resize(what_size), reader.Read(what.data(), what_size));

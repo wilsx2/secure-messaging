@@ -33,10 +33,9 @@ class Server
     bool SendMessage(SecureChannel& channel, Message message);
 
     void HandleRequest(int client_fd);
-    Message HandleMessage(int client_fd, Message message);
-    Message HandleRegistrationMessage(int client_fd, Message message);
-    Message HandleLoginMessage(int client_fd, Message message);
-    Message HandleChatMessage(int client_fd, Message message);
+    bool RegisterAccount(int client_fd, std::string username, std::string password);
+    bool LoginClient(int client_fd, std::string username, std::string password);
+    bool SendChat(int client_fd, std::string to, std::string content);
 
     public:
     Server();
