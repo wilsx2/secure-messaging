@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Network/Message.h"
+#include <string>
 
 struct Login : public Message
 {
+    static constexpr uint8_t TypeId {0};
     uint64_t id;
     std::string username;
     std::string password;
@@ -17,6 +19,8 @@ struct Login : public Message
 
 struct Register : public Message
 {
+    static constexpr uint8_t TypeId {1};
+
     uint64_t id;
     std::string username;
     std::string password;
@@ -30,6 +34,8 @@ struct Register : public Message
 
 struct DeleteAccount : public Message
 {
+    static constexpr uint8_t TypeId {2};
+
     uint64_t id;
 
     DeleteAccount() = default;
@@ -40,6 +46,8 @@ struct DeleteAccount : public Message
 
 struct ChangePassword : public Message
 {
+    static constexpr uint8_t TypeId {3};
+
     uint64_t id;
     std::string new_password;
 
@@ -52,6 +60,8 @@ struct ChangePassword : public Message
 
 struct ActiveUsers : public Message
 {
+    static constexpr uint8_t TypeId {4};
+
     uint64_t id;
 
     ActiveUsers() = default;
@@ -62,6 +72,8 @@ struct ActiveUsers : public Message
 
 struct SendChat : public Message
 {
+    static constexpr uint8_t TypeId {5};
+
     uint64_t id;
     std::string from;
     std::string to;
@@ -76,6 +88,8 @@ struct SendChat : public Message
 
 struct Success : public Message
 {
+    static constexpr uint8_t TypeId {6};
+
     uint64_t request_id;
 
     Success() = default;
@@ -87,6 +101,8 @@ struct Success : public Message
 
 struct Failure : public Message
 {
+    static constexpr uint8_t TypeId {7};
+
     uint64_t request_id;
     std::string what;
 
@@ -99,6 +115,8 @@ struct Failure : public Message
 
 struct StringList : public Message
 {
+    static constexpr uint8_t TypeId {8};
+
     uint64_t request_id;
     std::vector<std::string> value;
 
