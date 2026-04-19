@@ -2,6 +2,7 @@
 
 #include "Network/Message.h"
 #include <string>
+#include <variant>
 
 struct Login : public Message
 {
@@ -75,20 +76,33 @@ struct SendChat : public Message
     static constexpr uint8_t TypeId {5};
 
     uint64_t id;
-    std::string from;
     std::string to;
     std::string content;
 
     SendChat() = default;
-    SendChat(uint64_t id, std::string from, std::string to, std::string content)
-        : id(id), from(from), to(to), content(content) { }
+    SendChat(uint64_t id, std::string to, std::string content)
+        : id(id), to(to), content(content) { }
+    bool Serialize(std::vector<uint8_t>& bytes);
+    bool Deserialize(const std::vector<uint8_t>& bytes);
+};
+
+struct ReceiveChat : public Message
+{
+    static constexpr uint8_t TypeId {6};
+
+    std::string from;
+    std::string content;
+
+    ReceiveChat() = default;
+    ReceiveChat(std::string from, std::string content)
+        : from(from), content(content) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct Success : public Message
 {
-    static constexpr uint8_t TypeId {6};
+    static constexpr uint8_t TypeId {7};
 
     uint64_t request_id;
 
@@ -101,7 +115,7 @@ struct Success : public Message
 
 struct Failure : public Message
 {
-    static constexpr uint8_t TypeId {7};
+    static constexpr uint8_t TypeId {8};
 
     uint64_t request_id;
     std::string what;
@@ -115,7 +129,7 @@ struct Failure : public Message
 
 struct StringList : public Message
 {
-    static constexpr uint8_t TypeId {8};
+    static constexpr uint8_t TypeId {9};
 
     uint64_t request_id;
     std::vector<std::string> value;
@@ -126,3 +140,7 @@ struct StringList : public Message
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
+
+enum class RequestStatus { Sent, Disconnected, Timeout, SerializationFailed, SendFailed };
+using Request = std::variant<Login, Register, SendChat>;
+using Response = std::variant<Success, Failure, ReceiveChat>;

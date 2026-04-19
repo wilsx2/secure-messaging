@@ -33,9 +33,14 @@ int main()
         assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id);
     }
     {
-        SendChat a (6, "Snap", "Crackle", "Pop");    
+        SendChat a (6, "Fizz", "Buzz");    
         SendChat b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id && a.to == b.to && a.from == b.from && a.content == b.content);
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id && a.to == b.to && a.content == b.content);
+    }
+    {
+        ReceiveChat a ("Fizz", "Buzz");    
+        ReceiveChat b;
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.from == b.from && a.content == b.content);
     }
     {
         Success a (7);    

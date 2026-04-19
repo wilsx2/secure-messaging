@@ -124,15 +124,12 @@ bool ActiveUsers::Deserialize(const std::vector<uint8_t>& bytes)
 bool SendChat::Serialize(std::vector<uint8_t>& bytes)
 {
     uint8_t type_id = TypeId;
-    uint64_t from_size = from.size();
     uint64_t to_size = to.size();
     uint64_t content_size = content.size();
 
     ByteWriter writer(bytes);
     return writer.Write(&type_id, sizeof(type_id))
         && writer.Write(&id, sizeof(id))
-        && writer.Write(&from_size, sizeof(from_size))
-        && writer.Write(from.data(), from_size)
         && writer.Write(&to_size, sizeof(to_size))
         && writer.Write(to.data(), to_size)
         && writer.Write(&content_size, sizeof(content_size))
@@ -141,7 +138,6 @@ bool SendChat::Serialize(std::vector<uint8_t>& bytes)
 bool SendChat::Deserialize(const std::vector<uint8_t>& bytes)
 {
     uint8_t type_id;
-    uint64_t from_size;
     uint64_t to_size;
     uint64_t content_size;
 
@@ -149,10 +145,36 @@ bool SendChat::Deserialize(const std::vector<uint8_t>& bytes)
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId
         && reader.Read(&id, sizeof(id))
-        && reader.Read(&from_size, sizeof(from_size))
-        && (from.resize(from_size), reader.Read(from.data(), from_size))
         && reader.Read(&to_size, sizeof(to_size))
         && (to.resize(to_size), reader.Read(to.data(), to_size))
+        && reader.Read(&content_size, sizeof(content_size))
+        && (content.resize(content_size), reader.Read(content.data(), content_size));
+}
+
+bool ReceiveChat::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint8_t type_id = TypeId;
+    uint64_t from_size = from.size();
+    uint64_t content_size = content.size();
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_id, sizeof(type_id))
+        && writer.Write(&from_size, sizeof(from_size))
+        && writer.Write(from.data(), from_size)
+        && writer.Write(&content_size, sizeof(content_size))
+        && writer.Write(content.data(), content_size);
+}
+bool ReceiveChat::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint8_t type_id;
+    uint64_t from_size;
+    uint64_t content_size;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_id, sizeof(type_id))
+        && type_id == TypeId
+        && reader.Read(&from_size, sizeof(from_size))
+        && (from.resize(from_size), reader.Read(from.data(), from_size))
         && reader.Read(&content_size, sizeof(content_size))
         && (content.resize(content_size), reader.Read(content.data(), content_size));
 }
