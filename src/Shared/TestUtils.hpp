@@ -3,10 +3,10 @@
 #include "Server/Server.h"
 #include "Client/Client.h"
 #include "Client/Client.h"
-#include "Client/MessageBuilder.h"
 #include "Network/Message.h"
 #include "Logging/Logger.h"
 #include "Logging/ConsoleLog.h"
+#include "Shared/Messages.h"
 #include <cassert>
 #include <atomic>
 #include <thread>
@@ -41,14 +41,11 @@ void SetTestLog()
     Logger::GetInstance().SetLevel(Logger::Level::Trace);
 }
 
-void SendCommand(Client& cl, const std::string& co)
+void AssertResponse(Client& c, Message&& request, std::size_t response_type)
 {
-    cl.SendRequest(MessageBuilder::Build(co));
-}
-
-void AwaitType(Client& c, const std::string& t)
-{
-    assert(c.AwaitResponse().Get("type") == t);
+    auto response = c.SendRequest(request);
+    assert(response.has_value());
+    assert(response.value().index() == response_type);
 }
 
 std::array<std::string, 100> usernames {

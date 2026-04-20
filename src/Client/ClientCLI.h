@@ -8,7 +8,7 @@ class ClientCLI
 {
     private:
     enum class CommandType { Quit, CheckInbox, ParseFailure };
-    using Command = std::variant<std::unique_ptr<Message>, CommandType>;
+    using Command = std::variant<Request, CommandType>;
     Client _session;
 
     std::vector<std::string> ParseCommandArguments(const std::string& str);

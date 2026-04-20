@@ -6,7 +6,7 @@
 
 struct Ping : public Message
 {
-    static constexpr uint8_t TypeId {255};
+    static constexpr uint8_t TypeId {1};
 
     Ping() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
@@ -16,7 +16,7 @@ struct Ping : public Message
 
 struct Login : public Message
 {
-    static constexpr uint8_t TypeId {0};
+    static constexpr uint8_t TypeId {2};
     std::string username;
     std::string password;
 
@@ -30,7 +30,7 @@ struct Login : public Message
 
 struct Register : public Message
 {
-    static constexpr uint8_t TypeId {1};
+    static constexpr uint8_t TypeId {3};
 
     std::string username;
     std::string password;
@@ -45,7 +45,7 @@ struct Register : public Message
 
 struct Logout : public Message
 {
-    static constexpr uint8_t TypeId {2};
+    static constexpr uint8_t TypeId {4};
 
     Logout() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
@@ -55,7 +55,7 @@ struct Logout : public Message
 
 struct DeleteAccount : public Message
 {
-    static constexpr uint8_t TypeId {3};
+    static constexpr uint8_t TypeId {5};
 
     DeleteAccount() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
@@ -65,7 +65,7 @@ struct DeleteAccount : public Message
 
 struct ChangePassword : public Message
 {
-    static constexpr uint8_t TypeId {4};
+    static constexpr uint8_t TypeId {6};
 
     std::string new_password;
 
@@ -79,7 +79,7 @@ struct ChangePassword : public Message
 
 struct ActiveUsers : public Message
 {
-    static constexpr uint8_t TypeId {5};
+    static constexpr uint8_t TypeId {7};
 
     ActiveUsers() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
@@ -89,7 +89,7 @@ struct ActiveUsers : public Message
 
 struct SendChat : public Message
 {
-    static constexpr uint8_t TypeId {6};
+    static constexpr uint8_t TypeId {8};
 
     std::string to;
     std::string content;
@@ -104,7 +104,7 @@ struct SendChat : public Message
 
 struct ReceiveChat : public Message
 {
-    static constexpr uint8_t TypeId {7};
+    static constexpr uint8_t TypeId {9};
 
     std::string from;
     std::string content;
@@ -119,7 +119,7 @@ struct ReceiveChat : public Message
 
 struct Success : public Message
 {
-    static constexpr uint8_t TypeId {8};
+    static constexpr uint8_t TypeId {10};
 
     Success() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
@@ -129,7 +129,7 @@ struct Success : public Message
 
 struct Failure : public Message
 {
-    static constexpr uint8_t TypeId {9};
+    static constexpr uint8_t TypeId {11};
 
     std::string what;
 
@@ -143,7 +143,7 @@ struct Failure : public Message
 
 struct StringList : public Message
 {
-    static constexpr uint8_t TypeId {10};
+    static constexpr uint8_t TypeId {12};
 
     std::vector<std::string> value;
 

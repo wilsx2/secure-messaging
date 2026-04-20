@@ -201,7 +201,7 @@ bool SendChat::Deserialize(const std::vector<uint8_t>& bytes)
 }
 std::string SendChat::ToString()
 {
-    return "Send Chat: To " + to + " - ";
+    return "Send Chat: To " + to + " - " + content;
 }
 
 bool ReceiveChat::Serialize(std::vector<uint8_t>& bytes)
@@ -233,7 +233,7 @@ bool ReceiveChat::Deserialize(const std::vector<uint8_t>& bytes)
 }
 std::string ReceiveChat::ToString()
 {
-    return "Receive Chat: From " + from + " - ";
+    return "Receive Chat: From " + from + " - " + content;
 }
 
 bool Success::Serialize(std::vector<uint8_t>& bytes)

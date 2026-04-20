@@ -39,6 +39,8 @@ std::vector<ReceiveChat>&& Client::GetUnread()
 
 std::expected<Response, RequestError> Client::SendRequest(Message& request)
 {
+    Logger::GetInstance().Info("[Client] Sending Request: \"" + request.ToString() + "\"");
+    
     if (request.Serialize(_message_buffer))
         if (_channel.Send(_message_buffer))
             while (true)

@@ -15,8 +15,15 @@ void ClientCLI::Run()
         auto command = BuildCommand(input);
         if (command.index() == 0)
         {
+            auto request = std::get<Request>(command);
             std::expected<Response, RequestError>  outcome;
-            outcome = _session.SendRequest(*std::get<std::unique_ptr<Message>>(command));
+            switch (request.index())
+            {
+                case 0: outcome = _session.SendRequest(std::get<Ping>(request)); break;
+                case 1: outcome = _session.SendRequest(std::get<Login>(request)); break;
+                case 2: outcome = _session.SendRequest(std::get<Register>(request)); break;
+                case 3: outcome = _session.SendRequest(std::get<SendChat>(request)); break;
+            }
 
             if (outcome.has_value())
             {
@@ -62,17 +69,17 @@ ClientCLI::Command ClientCLI::BuildCommand(const std::string& command)
     if (args.size() > 0)
     {
         if (args[0] == "ping" && args.size() == 1)
-            return std::make_unique<Ping>(Ping());
+            return Ping();
         else if (args[0] == "login" && args.size() == 3)
-            return std::make_unique<Login>(Login(args[1], args[2]));
+            return Login(args[1], args[2]);
         else if (args[0] == "register" && args.size() == 3)
-            return std::make_unique<Register>(Register(args[1], args[2]));
+            return Register(args[1], args[2]);
         else if (args[0] == "chat" && args.size() >= 3)
         {
             std::string chat = "";
             for (auto c : args | std::views::drop(2) | std::views::join_with(' '))
                 chat += c;
-            return std::make_unique<SendChat>(SendChat(args[1], chat));
+            return SendChat(args[1], chat);
         }
         else if (args[0] == "check")
             return CommandType::CheckInbox;

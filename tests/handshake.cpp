@@ -8,13 +8,10 @@ int main()
     {
         Client client;
         client.Connect();
-        SendCommand(client, "register " + accounts(0));
-        AwaitType(client, "registered");
-        SendCommand(client, "login " + accounts(0));
-        AwaitType(client, "logged in");
-        SendCommand(client, "send " + usernames[0] + " love");
-        AwaitType(client, "chat");
-        AwaitType(client, "sent");
+        AssertResponse(client, Register(usernames[0], passwords[0]), 0);
+        AssertResponse(client, Login(usernames[0], passwords[0]), 0);
+        AssertResponse(client, SendChat(usernames[0], "I love you."), 0);
+        assert(client.GetUnread().size() == 1);
     }
 
     return 0;

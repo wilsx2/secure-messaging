@@ -90,10 +90,10 @@ bool Server::SendResponse(SecureChannel& channel, Message&& message)
 {
     
     bool success = message.Serialize(_message_buffer) && channel.Send(_message_buffer) != -1;
-    // if (success)
-        // Logger::GetInstance().Info("[Server] Sent response: \"" + message.ToString() + "\"");
-    // else
-        // Logger::GetInstance().Error("[Server] Failed to send response: \"" + message.ToString() + "\"");
+    if (success)
+        Logger::GetInstance().Info("[Server] Sent response: \"" + message.ToString() + "\"");
+    else
+        Logger::GetInstance().Error("[Server] Failed to send response: \"" + message.ToString() + "\"");
     return success;
 }
 
@@ -118,37 +118,44 @@ void Server::HandleRequest(int client_fd)
 
             bool parsed = false;
             ByteReader reader (_message_buffer);
-            uint8_t type_id = reader.Read(&type_id, sizeof(type_id));
-            if (type_id == Register::TypeId)
+            uint8_t type_id;
+            if (reader.Read(&type_id, sizeof(type_id)))
             {
-                Register request;
-                if (request.Deserialize(_message_buffer))
+                Logger::GetInstance().Trace("[Server] Request Type ID: \"" + std::to_string(type_id) + "\"");
+                if (type_id == Register::TypeId)
                 {
-                    RegisterAccount(client_fd, request);
-                    parsed = true;
+                    Register request;
+                    if (request.Deserialize(_message_buffer))
+                    {
+                        Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
+                        RegisterAccount(client_fd, request);
+                        parsed = true;
+                    }
+                }
+                else if (type_id == Login::TypeId)
+                {
+                    Login request;
+                    if (request.Deserialize(_message_buffer))
+                    {
+                        Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
+                        LoginClient(client_fd, request);
+                        parsed = true;
+                    }
+                }
+                else if (type_id == SendChat::TypeId)
+                {
+                    SendChat request;
+                    if (request.Deserialize(_message_buffer))
+                    {
+                        Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
+                        ForwardChat(client_fd, request);
+                        parsed = true;
+                    }
                 }
             }
-            else if (type_id == Login::TypeId)
-            {
-                Login request;
-                if (request.Deserialize(_message_buffer))
-                {
-                    LoginClient(client_fd, request);
-                    parsed = true;
-                }
-            }
-            else if (type_id == SendChat::TypeId)
-            {
-                SendChat request;
-                if (request.Deserialize(_message_buffer))
-                {
-                    ForwardChat(client_fd, request);
-                    parsed = true;
-                }
-            }
-
+            
             if (!parsed)
-                SendResponse(channel, Failure("Failed to parse request"));
+                    SendResponse(channel, Failure("Failed to parse request"));
         }
         else 
         {
