@@ -7,11 +7,10 @@ add_compile_options(-Wall -Wextra -Werror)
 set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/tests")
 
 set(SRCS
-    # disconnectingserver.cpp
+    disconnectingserver.cpp
     handshake.cpp
-    # largemessage.cpp
 	messages.cpp
-	# singlelogin.cpp
+	singlelogin.cpp
 	socket.cpp
 )
 

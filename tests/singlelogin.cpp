@@ -12,16 +12,12 @@ int main()
         {
             Client b;
             b.Connect();
-            SendCommand(b, "register " + accounts(0));
-            AwaitType(b, "registered");
-            SendCommand(b, "login " + accounts(0));
-            AwaitType(b, "logged in");
-            SendCommand(a, "login " + accounts(0));
-            AwaitType(a, "error");
+            AssertResponse(b, Register(usernames[0], passwords[0]), 0);
+            AssertResponse(b, Login(usernames[0], passwords[0]), 0);
+            AssertResponse(a, Login(usernames[0], passwords[0]), 1);
         }
 
-        SendCommand(a, "login " + accounts(0));
-        AwaitType(a, "logged in");
+        AssertResponse(a, Login(usernames[0], passwords[0]), 0);
     }
     return 0;
 }
