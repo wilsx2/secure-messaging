@@ -53,9 +53,38 @@ bool Server::HandleEvents()
         }
         else
         {
-            // Handle request
             Logger::GetInstance().Trace("[Server] Event coming from connected client");
-            HandleRequest(_epoll_events[i].data.fd);
+            int client_fd = _epoll_events[i].data.fd;
+
+            // Check for secure channel between server and client
+            if (!_sessions.IsEstablished(client_fd))
+            {
+                Logger::GetInstance().Error("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
+                continue;
+            }
+
+            // Receive across secure channel
+            SecureChannel& channel = _sessions.GetChannel(client_fd);
+            Logger::GetInstance().Trace("[Server] Receiving data across secure channel");
+
+            // Check if this is a request or attempt to close the connection
+            if (channel.Receive(_message_buffer) > 0)
+            {
+                if (_sessions.GetRequestsLastMinute(client_fd) < _max_requests_per_minute) {
+                    _sessions.SubmitRequestTimestamp(client_fd);
+                    HandleRequest(_epoll_events[i].data.fd);
+                }
+                else
+                {
+                    std::string error = "Rate limit of " + std::to_string(client_fd) + " exceeded (" + std::to_string(_max_requests_per_minute) + " requests per minute";
+                    Logger::GetInstance().Error("[Server] " + error);
+                    SendResponse(channel, Failure(error));
+                }
+            }
+            else
+            {
+                CloseConnection(client_fd);
+            }
         }
     }
 
@@ -99,75 +128,46 @@ bool Server::SendResponse(SecureChannel& channel, Message&& message)
 
 void Server::HandleRequest(int client_fd)
 {
-    // Check for secure channel between server and client
-    if (!_sessions.IsEstablished(client_fd))
+    bool parsed = false;
+    ByteReader reader (_message_buffer);
+    uint8_t type_id;
+    if (reader.Read(&type_id, sizeof(type_id)))
     {
-        Logger::GetInstance().Error("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
-        return;
-    }
-
-    // Receive message across secure channel
-    SecureChannel& channel = _sessions.GetChannel(client_fd);
-    Logger::GetInstance().Trace("[Server] Receiving data across secure channel");
-    // Check if this is a real request or a request to close the connection
-    if (channel.Receive(_message_buffer) > 0)
-    {
-        // Check against rate limit
-        if (_sessions.GetRequestsLastMinute(client_fd) < _max_requests_per_minute) {
-            _sessions.SubmitRequestTimestamp(client_fd);
-
-            bool parsed = false;
-            ByteReader reader (_message_buffer);
-            uint8_t type_id;
-            if (reader.Read(&type_id, sizeof(type_id)))
-            {
-                Logger::GetInstance().Trace("[Server] Request Type ID: \"" + std::to_string(type_id) + "\"");
-                if (type_id == Register::TypeId)
-                {
-                    Register request;
-                    if (request.Deserialize(_message_buffer))
-                    {
-                        Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
-                        RegisterAccount(client_fd, request);
-                        parsed = true;
-                    }
-                }
-                else if (type_id == Login::TypeId)
-                {
-                    Login request;
-                    if (request.Deserialize(_message_buffer))
-                    {
-                        Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
-                        LoginClient(client_fd, request);
-                        parsed = true;
-                    }
-                }
-                else if (type_id == SendChat::TypeId)
-                {
-                    SendChat request;
-                    if (request.Deserialize(_message_buffer))
-                    {
-                        Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
-                        ForwardChat(client_fd, request);
-                        parsed = true;
-                    }
-                }
-            }
-            
-            if (!parsed)
-                    SendResponse(channel, Failure("Failed to parse request"));
-        }
-        else 
+        Logger::GetInstance().Trace("[Server] Request Type ID: \"" + std::to_string(type_id) + "\"");
+        if (type_id == Register::TypeId)
         {
-            std::string error = "Rate limit of " + std::to_string(client_fd) + " exceeded (" + std::to_string(_max_requests_per_minute) + " requests per minute";
-            Logger::GetInstance().Error("[Server] " + error);
-            SendResponse(channel, Failure(error));
+            Register request;
+            if (request.Deserialize(_message_buffer))
+            {
+                Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
+                RegisterAccount(client_fd, request);
+                parsed = true;
+            }
+        }
+        else if (type_id == Login::TypeId)
+        {
+            Login request;
+            if (request.Deserialize(_message_buffer))
+            {
+                Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
+                LoginClient(client_fd, request);
+                parsed = true;
+            }
+        }
+        else if (type_id == SendChat::TypeId)
+        {
+            SendChat request;
+            if (request.Deserialize(_message_buffer))
+            {
+                Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
+                ForwardChat(client_fd, request);
+                parsed = true;
+            }
         }
     }
-    else
-    {
-        CloseConnection(client_fd);
-    }
+
+    if (!parsed)
+        SendResponse(_sessions.GetChannel(client_fd), Failure("Failed to parse request"));
 }
 
 void Server::RegisterAccount(int client_fd, Register request)
