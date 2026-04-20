@@ -144,5 +144,5 @@ struct StringList : public Message
 };
 
 enum class RequestError { Send, Disconnected, Timeout, Serialization, Deserialization };
-using Request = std::variant<Login, Register, SendChat>;
+using Request = std::variant<Ping, Login, Register, SendChat>;
 using Response = std::variant<Success, Failure, ReceiveChat>;

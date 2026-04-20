@@ -23,7 +23,7 @@ int main()
     }
     {
         DeleteAccount a;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes));
+        assert(a.Serialize(bytes) && a.Deserialize(bytes));
     }
     {
         ChangePassword a ("Fizz");    

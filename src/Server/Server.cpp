@@ -9,8 +9,8 @@
 Server::Server()
     : _socket(PORT, INADDR_ANY)
     , _epoll_fd(epoll_create1(0)) // TODO: Handle errors
-    , _max_requests_per_minute(120)
     , _message_buffer(MESSAGE_BUFFER_SIZE)
+    , _max_requests_per_minute(120)
 {
     _socket.Bind();
     _socket.Listen(1);
@@ -147,7 +147,8 @@ void Server::HandleRequest(int client_fd)
                 }
             }
 
-
+            if (!parsed)
+                SendResponse(channel, Failure("Failed to parse request"));
         }
         else 
         {
@@ -165,10 +166,10 @@ void Server::HandleRequest(int client_fd)
 void Server::RegisterAccount(int client_fd, Register request)
 {
     int error = _accounts.Register(request.username, request.password);
-    if (error != 0)
-        SendResponse(_sessions.GetChannel(client_fd), Failure(AccountRegistry::ErrorString(error)));
-    else
+    if (error == 0)
         SendResponse(_sessions.GetChannel(client_fd), Success());
+    else
+        SendResponse(_sessions.GetChannel(client_fd), Failure(AccountRegistry::ErrorString(error)));
 }
 
 void Server::LoginClient(int client_fd, Login request)
