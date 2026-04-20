@@ -1,19 +1,18 @@
 #pragma once
 
 #include "Client/Client.h"
-#include <memory>
-#include <thread>
+#include "Shared/Messages.h"
+#include <expected>
 
 class ClientCLI
 {
     private:
+    enum class CommandType { Quit, CheckInbox, ParseFailure };
+    using Command = std::variant<std::unique_ptr<Message>, CommandType>;
     Client _session;
-    std::unique_ptr<std::thread> _recv_thread;
-    std::unique_ptr<std::thread> _send_thread;
 
-    void ReceiveLoop();
-    void SendLoop();
-    void PrintMessage(const Message& message);
+    std::vector<std::string> ParseCommandArguments(const std::string& str);
+    Command BuildCommand(const std::string& command);
 
     public:
     ClientCLI() = default;

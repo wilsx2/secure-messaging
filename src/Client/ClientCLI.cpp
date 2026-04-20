@@ -1,64 +1,101 @@
 #include "Client/ClientCLI.h"
-#include "Client/MessageBuilder.h"
 #include <format>
+#include <ranges>
+#include <cassert>
 
 void ClientCLI::Run()
 {
     _session.Connect();
 
-    if (_session.Connected())
-    {
-        _recv_thread = std::make_unique<std::thread>([&](){ReceiveLoop();});
-        _send_thread = std::make_unique<std::thread>([&](){SendLoop();});
-
-        while (_session.Connected());
-
-        _recv_thread->join();
-        _send_thread->join();
-    }
-}
-
-void ClientCLI::SendLoop()
-{
     std::string input;
-    while(_session.Connected())
+    while(_session.IsConnected())
     {
         std::getline(std::cin, input);
 
-        Message message = MessageBuilder::Build(input);
-        if (message.TryGet("type") != "error")
-            _session.SendRequest(message);
+        auto command = BuildCommand(input);
+        if (command.index() == 0)
+        {
+            std::expected<Response, RequestError>  outcome;
+            outcome = _session.SendRequest(*std::get<std::unique_ptr<Message>>(command));
+
+            if (outcome.has_value())
+            {
+                auto response = outcome.value();
+                switch (response.index())
+                {
+                    case 0: std::cout << "Success" << std::endl; break;
+                    case 1: std::cout << "Failure: " << std::get<Failure>(response).what << std::endl; break;
+                    case 2: assert(false); break;
+                }
+            }
+            else
+            {
+                std::string error;
+                switch (outcome.error())
+                {
+                    case RequestError::Send:            error = "On send"; break;
+                    case RequestError::Disconnected:    error = "Server disconnected"; break;
+                    case RequestError::Timeout:         error = "Timeout occurred"; break;
+                    case RequestError::Serialization:   error = "Request serialization failed"; break;
+                    case RequestError::Deserialization: error = "Response deserialization failed"; break;
+                }
+                std::cout << "Error: " << error << std::endl;
+            }
+        }
         else
-            PrintMessage(message);
+        {
+            auto command_e = std::get<CommandType>(command);
+            switch (command_e)
+            {
+                case CommandType::CheckInbox:   for(auto& chat : _session.GetUnread()) std::cout << chat.from << "] " << chat.content << std::endl; break;
+                case CommandType::Quit:         _session.Disconnect(); break;
+                case CommandType::ParseFailure: std::cout << "Command failed to parse" << std::endl; break;
+            }
+        }
     }
 }
 
-void ClientCLI::ReceiveLoop()
+ClientCLI::Command ClientCLI::BuildCommand(const std::string& command)
 {
-    while (_session.Connected())
+    auto args = ParseCommandArguments(command);
+
+    if (args.size() > 0)
     {
-        Message message = _session.AwaitResponse();
-        PrintMessage(message);
+        if (args[0] == "ping" && args.size() == 1)
+            return std::make_unique<Ping>(Ping());
+        else if (args[0] == "login" && args.size() == 3)
+            return std::make_unique<Login>(Login(args[1], args[2]));
+        else if (args[0] == "register" && args.size() == 3)
+            return std::make_unique<Register>(Register(args[1], args[2]));
+        else if (args[0] == "chat" && args.size() >= 3)
+        {
+            std::string chat = "";
+            for (auto c : args | std::views::drop(2) | std::views::join_with(' '))
+                chat += c;
+            return std::make_unique<SendChat>(SendChat(args[1], chat));
+        }
+        else if (args[0] == "check")
+            return CommandType::CheckInbox;
+        else if (args[0] == "quit")
+            return CommandType::Quit;
     }
+    return CommandType::ParseFailure;
 }
 
-void ClientCLI::PrintMessage(const Message& message)
+std::vector<std::string> ClientCLI::ParseCommandArguments(const std::string& str)
 {
-    std::string output = "";
+    std::vector<std::string> args;
 
-    std::string type = message.Get("type");
-    if (type == "error" && message.Has("content"))
-        output = message.Get("content");
-    else if (type == "registered")
-        output = std::format("Registered account \"{}\"", message.Get("username"));
-    else if (type == "logged in" && message.Has("username"))
-        output = std::format("Logged in as \"{}\"", message.Get("username"));
-    else if (type == "chat" && message.HasAll("from", "content"))
-        output = std::format("[{}] {}", message.Get("from"), message.Get("content"));
-    else if (type == "sent")
-        output = "Sent";
-
-    if (output != "") {
-        std::cout << output << "\n";
+    std::size_t i = 0;
+    std::size_t j = str.find(' ', i);
+    while (j != std::string::npos)
+    {
+        args.emplace_back(str.substr(i, j - i));
+        i = j + 1;
+        j = str.find(' ', i);
     }
+    if(i < str.size())
+        args.emplace_back(str.substr(i));
+
+    return args;
 }
