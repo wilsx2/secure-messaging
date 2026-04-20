@@ -6,6 +6,7 @@
 #include "Network/SecureChannel.h"
 #include "Network/Message.h"
 #include "Shared/ThreadPool.h"
+#include "Shared/Messages.h"
 #include <vector>
 #include <thread>
 #include <optional>
@@ -20,6 +21,7 @@ class Server
     TcpSocket _socket;
     int _epoll_fd;
     std::array<epoll_event, MAX_EVENTS> _epoll_events;
+    std::vector<uint8_t> _message_buffer;
 
     ThreadPool _pool;
     SessionManager _sessions;
@@ -30,12 +32,12 @@ class Server
     void EstablishConnection(int client_fd);
     void CloseConnection(int client_fd);
 
-    bool SendMessage(SecureChannel& channel, Message message);
+    bool SendResponse(SecureChannel& channel, Message&& message);
 
     void HandleRequest(int client_fd);
-    bool RegisterAccount(int client_fd, std::string username, std::string password);
-    bool LoginClient(int client_fd, std::string username, std::string password);
-    bool SendChat(int client_fd, std::string to, std::string content);
+    void RegisterAccount(int client_fd, Register request);
+    void LoginClient(int client_fd, Login request);
+    void ForwardChat(int client_fd, SendChat request);
 
     public:
     Server();

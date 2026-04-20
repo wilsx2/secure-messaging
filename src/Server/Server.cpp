@@ -1,12 +1,16 @@
 #include "Server/Server.h"
 #include "Shared/Global.h"
+#include "Shared/Messages.h"
 #include "Logging/Logger.h"
 #include "Network/SecureChannel.h"
 #include "Network/Message.h"
+#include "Network/Serialization.h"
+
 Server::Server()
     : _socket(PORT, INADDR_ANY)
     , _epoll_fd(epoll_create1(0)) // TODO: Handle errors
     , _max_requests_per_minute(120)
+    , _message_buffer(MESSAGE_BUFFER_SIZE)
 {
     _socket.Bind();
     _socket.Listen(1);
@@ -82,13 +86,14 @@ void Server::CloseConnection(int client_fd)
     _sessions.Destroy(client_fd);
 }
 
-bool Server::SendMessage(SecureChannel& channel, Message message)
+bool Server::SendResponse(SecureChannel& channel, Message&& message)
 {
-    bool success = channel.Send(message.Serialize()) != -1;
-    if (success)
-        Logger::GetInstance().Info("[Server] Sent message: \"" + message.ToString() + "\"");
-    else
-        Logger::GetInstance().Error("[Server] Failed to send message: \"" + message.ToString() + "\"");
+    
+    bool success = message.Serialize(_message_buffer) && channel.Send(_message_buffer) != -1;
+    // if (success)
+        // Logger::GetInstance().Info("[Server] Sent response: \"" + message.ToString() + "\"");
+    // else
+        // Logger::GetInstance().Error("[Server] Failed to send response: \"" + message.ToString() + "\"");
     return success;
 }
 
@@ -103,33 +108,52 @@ void Server::HandleRequest(int client_fd)
 
     // Receive message across secure channel
     SecureChannel& channel = _sessions.GetChannel(client_fd);
-    Message message;
-    std::vector<uint8_t> data;
     Logger::GetInstance().Trace("[Server] Receiving data across secure channel");
     // Check if this is a real request or a request to close the connection
-    if (channel.Receive(data) > 0) // TODO: Replace with peek as to not waste time parsing requests from clients over their rate limit
+    if (channel.Receive(_message_buffer) > 0)
     {
         // Check against rate limit
         if (_sessions.GetRequestsLastMinute(client_fd) < _max_requests_per_minute) {
             _sessions.SubmitRequestTimestamp(client_fd);
 
-            if (message.Deserialize(data))
+            bool parsed = false;
+            ByteReader reader (_message_buffer);
+            uint8_t type_id = reader.Read(&type_id, sizeof(type_id));
+            if (type_id == Register::TypeId)
             {
-                // Process request and send response
-                Logger::GetInstance().Info("[Server] Received request from host " + std::to_string(client_fd) + " \"" + message.ToString() + "\"");
-                Message response = HandleMessage(client_fd, message);
-                SendMessage(channel, response);
+                Register request;
+                if (request.Deserialize(_message_buffer))
+                {
+                    RegisterAccount(client_fd, request);
+                    parsed = true;
+                }
             }
-            else
+            else if (type_id == Login::TypeId)
             {
-                Logger::GetInstance().Error("[Server] Received malformed request from host " + std::to_string(client_fd));
-                SendMessage(channel, Message::Error("Message received failed to deserialize"));
+                Login request;
+                if (request.Deserialize(_message_buffer))
+                {
+                    LoginClient(client_fd, request);
+                    parsed = true;
+                }
             }
+            else if (type_id == SendChat::TypeId)
+            {
+                SendChat request;
+                if (request.Deserialize(_message_buffer))
+                {
+                    ForwardChat(client_fd, request);
+                    parsed = true;
+                }
+            }
+
+
         }
-        else
+        else 
         {
-            Logger::GetInstance().Error("[Server] Host " + std::to_string(client_fd) + " is over their rate limit");
-            SendMessage(channel, Message::Error("Exceeded rate limit of " + std::to_string(_max_requests_per_minute) + " requests per minute"));
+            std::string error = "Rate limit of " + std::to_string(client_fd) + " exceeded (" + std::to_string(_max_requests_per_minute) + " requests per minute";
+            Logger::GetInstance().Error("[Server] " + error);
+            SendResponse(channel, Failure(error));
         }
     }
     else
@@ -138,75 +162,40 @@ void Server::HandleRequest(int client_fd)
     }
 }
 
-Message Server::HandleMessage(int client_fd, Message message)
+void Server::RegisterAccount(int client_fd, Register request)
 {
-    std::optional<std::string> type = message.TryGet("type");
-
-         if (type == "login")       return HandleLoginMessage(client_fd, message);
-    else if (type == "register")    return HandleRegistrationMessage(client_fd, message);
-    else if (type == "chat")        return HandleChatMessage(client_fd, message);
-    return Message::Error("Message of unrecognized type");
-}
-
-
-Message Server::HandleRegistrationMessage(int client_fd, Message message)
-{
-    (void) client_fd; // Unused
-
-    // Validate
-    if (!message.HasAll("username", "password"))
-        return Message::Error("Registration message is incomplete");
-
-    // Attempt Register
-    int error = _accounts.Register(message.Get("username"), message.Get("password"));
+    int error = _accounts.Register(request.username, request.password);
     if (error != 0)
-        return Message::Error(AccountRegistry::ErrorString(error));
-
-    // Successful Response
-    message.Set("type", "registered");
-    return message;
+        SendResponse(_sessions.GetChannel(client_fd), Failure(AccountRegistry::ErrorString(error)));
+    else
+        SendResponse(_sessions.GetChannel(client_fd), Success());
 }
 
-Message Server::HandleLoginMessage(int client_fd, Message message)
+void Server::LoginClient(int client_fd, Login request)
 {
-    // Validate
-    if (!message.HasAll("username", "password"))
-        return Message::Error("Login message is incomplete");
+    auto& channel = _sessions.GetChannel(client_fd);
 
-    const std::string& username = message.Get("username");
-    if (!_accounts.Contains(username) || !_accounts.MatchingPassword(username, message.Get("password")))
-        return Message::Error("Incorrect password or username");
-
-    if (_sessions.IsEstablished(username))
-        return Message::Error("A user is already logged in under that account");
-
-    // Authenticate
-    _sessions.Authenticate(client_fd, username);
-
-    // Successful Response
-    message.Set("type", "logged in");
-    return message;
+    if (_accounts.Contains(request.username) && _accounts.MatchingPassword(request.username, request.password))
+        if (_sessions.Authenticate(client_fd, request.username))
+            SendResponse(channel, Success());
+        else
+            SendResponse(channel, Failure("A user is already logged in under that account"));
+    else
+        SendResponse(channel, Failure("Incorrect password or username"));
 }
 
-Message Server::HandleChatMessage(int client_fd, Message message)
+void Server::ForwardChat(int client_fd, SendChat request)
 {
-    // Validate
-    if (!message.HasAll("to", "content"))
-        return Message::Error("Chat message is incomplete");
+    auto& channel = _sessions.GetChannel(client_fd);
 
-    if (!_sessions.IsAuthenticated(client_fd))
-        return Message::Error("Sender is unauthenticated");
-
-    const std::string& recipient = message.Get("to");
-    if (!_sessions.IsEstablished(recipient))
-        return Message::Error("Recipient does not exist");
-
-    // Attempt Send
-    message.Set("from", _sessions.GetUsername(client_fd));
-    if (!SendMessage(_sessions.GetChannel(recipient), message))
-        return Message::Error("Message failed to send");
-
-    // Successful Response
-    message.Set("type", "sent");
-    return message;
+    if (_sessions.IsAuthenticated(client_fd))
+        if (_sessions.IsEstablished(request.to))
+            if (SendResponse(_sessions.GetChannel(request.to), ReceiveChat(_sessions.GetUsername(client_fd), request.content)))
+                SendResponse(channel, Success());
+            else
+                SendResponse(channel, Failure("Chat failed to send"));
+        else
+            SendResponse(channel, Failure("Recipient does not exist"));
+    else
+        SendResponse(channel, Failure("Client unauthenticated"));
 }
