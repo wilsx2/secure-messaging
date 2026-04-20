@@ -8,34 +8,36 @@ int main()
     std::vector<uint8_t> bytes (1024);
 
     {
-        Login a (1, "Fizz", "Buzz");    
+        Login a ("Fizz", "Buzz");    
         Login b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id && a.username == b.username && a.password == b.password);
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.username == b.username && a.password == b.password);
     }
     {
-        Register a (2, "Fizz", "Buzz");    
+        Register a ("Fizz", "Buzz");    
         Register b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id && a.username == b.username && a.password == b.password);
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.username == b.username && a.password == b.password);
     }
     {
-        DeleteAccount a (3);    
-        DeleteAccount b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id);
+        Logout a;
+        assert(a.Serialize(bytes) && a.Deserialize(bytes));
     }
     {
-        ChangePassword a (4, "Fizz");    
+        DeleteAccount a;
+        assert(a.Serialize(bytes) && b.Deserialize(bytes));
+    }
+    {
+        ChangePassword a ("Fizz");    
         ChangePassword b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id && a.new_password == b.new_password);
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.new_password == b.new_password);
     }
     {
-        ActiveUsers a (5);    
-        ActiveUsers b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id);
+        ActiveUsers a;
+        assert(a.Serialize(bytes) && a.Deserialize(bytes));
     }
     {
-        SendChat a (6, "Fizz", "Buzz");    
+        SendChat a ("Fizz", "Buzz");    
         SendChat b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.id == b.id && a.to == b.to && a.content == b.content);
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.to == b.to && a.content == b.content);
     }
     {
         ReceiveChat a ("Fizz", "Buzz");    
@@ -43,21 +45,20 @@ int main()
         assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.from == b.from && a.content == b.content);
     }
     {
-        Success a (7);    
-        Success b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.request_id == b.request_id);
+        Success a;
+        assert(a.Serialize(bytes) && a.Deserialize(bytes));
     }
     {
-        Failure a (8, "Fizz");    
+        Failure a ("Fizz");    
         Failure b;
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.request_id == b.request_id && a.what == b.what);
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.what == b.what);
     }
     {
         std::vector<std::string> strings {"Snap", "Crackle", "Pop"};
-        StringList a (9, std::move(strings));    
+        StringList a (std::move(strings));    
         StringList b;
 
-        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.request_id == b.request_id && a.value == b.value);
+        assert(a.Serialize(bytes) && b.Deserialize(bytes) && a.value == b.value);
     }
 
     return 0;

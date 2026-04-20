@@ -9,7 +9,6 @@ bool Login::Serialize(std::vector<uint8_t>& bytes)
 
     ByteWriter writer(bytes);
     return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&id, sizeof(id))
         && writer.Write(&username_size, sizeof(username_size))
         && writer.Write(username.data(), username_size)
         && writer.Write(&password_size, sizeof(password_size))
@@ -24,7 +23,6 @@ bool Login::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId
-        && reader.Read(&id, sizeof(id))
         && reader.Read(&username_size, sizeof(username_size))
         && (username.resize(username_size), reader.Read(username.data(), username_size))
         && reader.Read(&password_size, sizeof(password_size))
@@ -39,7 +37,6 @@ bool Register::Serialize(std::vector<uint8_t>& bytes)
 
     ByteWriter writer(bytes);
     return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&id, sizeof(id))
         && writer.Write(&username_size, sizeof(username_size))
         && writer.Write(username.data(), username_size)
         && writer.Write(&password_size, sizeof(password_size))
@@ -54,11 +51,26 @@ bool Register::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId
-        && reader.Read(&id, sizeof(id))
         && reader.Read(&username_size, sizeof(username_size))
         && (username.resize(username_size), reader.Read(username.data(), username_size))
         && reader.Read(&password_size, sizeof(password_size))
         && (password.resize(password_size), reader.Read(password.data(), password_size));
+}
+
+bool Logout::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint8_t type_id = TypeId;
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_id, sizeof(type_id));
+}
+bool Logout::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint8_t type_id;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_id, sizeof(type_id))
+        && type_id == TypeId;
 }
 
 bool DeleteAccount::Serialize(std::vector<uint8_t>& bytes)
@@ -66,8 +78,7 @@ bool DeleteAccount::Serialize(std::vector<uint8_t>& bytes)
     uint8_t type_id = TypeId;
 
     ByteWriter writer(bytes);
-    return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&id, sizeof(id));
+    return writer.Write(&type_id, sizeof(type_id));
 }
 bool DeleteAccount::Deserialize(const std::vector<uint8_t>& bytes)
 {
@@ -75,8 +86,7 @@ bool DeleteAccount::Deserialize(const std::vector<uint8_t>& bytes)
 
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
-        && type_id == TypeId
-        && reader.Read(&id, sizeof(id));
+        && type_id == TypeId;
 }
 
 bool ChangePassword::Serialize(std::vector<uint8_t>& bytes)
@@ -86,7 +96,6 @@ bool ChangePassword::Serialize(std::vector<uint8_t>& bytes)
 
     ByteWriter writer(bytes);
     return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&id, sizeof(id))
         && writer.Write(&new_password_size, sizeof(new_password_size))
         && writer.Write(new_password.data(), new_password_size);
 }
@@ -98,7 +107,6 @@ bool ChangePassword::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId
-        && reader.Read(&id, sizeof(id))
         && reader.Read(&new_password_size, sizeof(new_password_size))
         && (new_password.resize(new_password_size), reader.Read(new_password.data(), new_password_size));
 }
@@ -108,8 +116,7 @@ bool ActiveUsers::Serialize(std::vector<uint8_t>& bytes)
     uint8_t type_id = TypeId;
 
     ByteWriter writer(bytes);
-    return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&id, sizeof(id));
+    return writer.Write(&type_id, sizeof(type_id));
 }
 bool ActiveUsers::Deserialize(const std::vector<uint8_t>& bytes)
 {
@@ -117,8 +124,7 @@ bool ActiveUsers::Deserialize(const std::vector<uint8_t>& bytes)
 
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
-        && type_id == TypeId
-        && reader.Read(&id, sizeof(id));
+        && type_id == TypeId;
 }
 
 bool SendChat::Serialize(std::vector<uint8_t>& bytes)
@@ -129,7 +135,6 @@ bool SendChat::Serialize(std::vector<uint8_t>& bytes)
 
     ByteWriter writer(bytes);
     return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&id, sizeof(id))
         && writer.Write(&to_size, sizeof(to_size))
         && writer.Write(to.data(), to_size)
         && writer.Write(&content_size, sizeof(content_size))
@@ -144,7 +149,6 @@ bool SendChat::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId
-        && reader.Read(&id, sizeof(id))
         && reader.Read(&to_size, sizeof(to_size))
         && (to.resize(to_size), reader.Read(to.data(), to_size))
         && reader.Read(&content_size, sizeof(content_size))
@@ -184,8 +188,7 @@ bool Success::Serialize(std::vector<uint8_t>& bytes)
     uint8_t type_id = TypeId;
 
     ByteWriter writer(bytes);
-    return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&request_id, sizeof(request_id));
+    return writer.Write(&type_id, sizeof(type_id));
 }
 bool Success::Deserialize(const std::vector<uint8_t>& bytes)
 {
@@ -193,8 +196,7 @@ bool Success::Deserialize(const std::vector<uint8_t>& bytes)
 
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
-        && type_id == TypeId
-        && reader.Read(&request_id, sizeof(request_id));
+        && type_id == TypeId;
 }
 
 bool Failure::Serialize(std::vector<uint8_t>& bytes)
@@ -204,7 +206,6 @@ bool Failure::Serialize(std::vector<uint8_t>& bytes)
 
     ByteWriter writer(bytes);
     return writer.Write(&type_id, sizeof(type_id))
-        && writer.Write(&request_id, sizeof(request_id))
         && writer.Write(&what_size, sizeof(what_size))
         && writer.Write(what.data(), what_size);
 }
@@ -216,7 +217,6 @@ bool Failure::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId
-        && reader.Read(&request_id, sizeof(request_id))
         && reader.Read(&what_size, sizeof(what_size))
         && (what.resize(what_size), reader.Read(what.data(), what_size));
 }
@@ -228,7 +228,6 @@ bool StringList::Serialize(std::vector<uint8_t>& bytes)
 
     ByteWriter writer(bytes);
     if (!(writer.Write(&type_id, sizeof(type_id)))
-    ||  !(writer.Write(&request_id, sizeof(request_id)))
     ||  !(writer.Write(&list_size, sizeof(list_size))))
         return false;
 
@@ -250,7 +249,6 @@ bool StringList::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     if (!reader.Read(&type_id, sizeof(type_id))
     ||  type_id != TypeId
-    ||  !reader.Read(&request_id, sizeof(request_id))
     ||  !reader.Read(&list_size, sizeof(list_size)))
         return false;
     

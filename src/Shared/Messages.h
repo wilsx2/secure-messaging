@@ -7,13 +7,12 @@
 struct Login : public Message
 {
     static constexpr uint8_t TypeId {0};
-    uint64_t id;
     std::string username;
     std::string password;
 
     Login() = default;
-    Login(uint64_t id, std::string username, std::string password)
-        : id(id), username(username), password(password) { }
+    Login(std::string username, std::string password)
+        : username(username), password(password) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
@@ -22,73 +21,73 @@ struct Register : public Message
 {
     static constexpr uint8_t TypeId {1};
 
-    uint64_t id;
     std::string username;
     std::string password;
 
     Register() = default;
-    Register(uint64_t id, std::string username, std::string password)
-        : id(id), username(username), password(password) { }
+    Register(std::string username, std::string password)
+        : username(username), password(password) { }
+    bool Serialize(std::vector<uint8_t>& bytes);
+    bool Deserialize(const std::vector<uint8_t>& bytes);
+};
+
+struct Logout : public Message
+{
+    static constexpr uint8_t TypeId {2};
+
+    Logout() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct DeleteAccount : public Message
 {
-    static constexpr uint8_t TypeId {2};
-
-    uint64_t id;
+    static constexpr uint8_t TypeId {3};
 
     DeleteAccount() = default;
-    DeleteAccount(uint64_t id): id(id) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct ChangePassword : public Message
 {
-    static constexpr uint8_t TypeId {3};
+    static constexpr uint8_t TypeId {4};
 
-    uint64_t id;
     std::string new_password;
 
     ChangePassword() = default;
-    ChangePassword(uint64_t id, std::string new_password)
-        : id(id), new_password(new_password) { }
+    ChangePassword(std::string new_password)
+        : new_password(new_password) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct ActiveUsers : public Message
 {
-    static constexpr uint8_t TypeId {4};
-
-    uint64_t id;
+    static constexpr uint8_t TypeId {5};
 
     ActiveUsers() = default;
-    ActiveUsers(uint64_t id): id(id) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct SendChat : public Message
 {
-    static constexpr uint8_t TypeId {5};
+    static constexpr uint8_t TypeId {6};
 
-    uint64_t id;
     std::string to;
     std::string content;
 
     SendChat() = default;
-    SendChat(uint64_t id, std::string to, std::string content)
-        : id(id), to(to), content(content) { }
+    SendChat(std::string to, std::string content)
+        : to(to), content(content) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct ReceiveChat : public Message
 {
-    static constexpr uint8_t TypeId {6};
+    static constexpr uint8_t TypeId {7};
 
     std::string from;
     std::string content;
@@ -102,45 +101,39 @@ struct ReceiveChat : public Message
 
 struct Success : public Message
 {
-    static constexpr uint8_t TypeId {7};
-
-    uint64_t request_id;
+    static constexpr uint8_t TypeId {8};
 
     Success() = default;
-    Success(uint64_t request_id)
-        : request_id(request_id) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct Failure : public Message
 {
-    static constexpr uint8_t TypeId {8};
+    static constexpr uint8_t TypeId {9};
 
-    uint64_t request_id;
     std::string what;
 
     Failure() = default;
-    Failure(uint64_t request_id, std::string what)
-        : request_id(request_id), what(what) { }
+    Failure(std::string what)
+        : what(what) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
 struct StringList : public Message
 {
-    static constexpr uint8_t TypeId {9};
+    static constexpr uint8_t TypeId {10};
 
-    uint64_t request_id;
     std::vector<std::string> value;
 
     StringList() = default;
-    StringList(uint64_t request_id, std::vector<std::string>&& value)
+    StringList(std::vector<std::string>&& value)
         : request_id(request_id), value(value) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };
 
-enum class RequestStatus { Sent, Disconnected, Timeout, SerializationFailed, SendFailed };
+enum class RequestError { Send, Disconnected, Timeout, Serialization, Deserialization };
 using Request = std::variant<Login, Register, SendChat>;
 using Response = std::variant<Success, Failure, ReceiveChat>;
