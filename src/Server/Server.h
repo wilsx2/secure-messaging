@@ -11,6 +11,7 @@
 #include <thread>
 #include <optional>
 #include <array>
+#include <memory>
 #include <sys/epoll.h>
 
 class Server
@@ -32,12 +33,14 @@ class Server
     void EstablishConnection(int client_fd);
     void CloseConnection(int client_fd);
 
+    bool SendResponse(SecureChannel& channel, Message& message);
     bool SendResponse(SecureChannel& channel, Message&& message);
 
-    void HandleRequest(int client_fd);
-    void RegisterAccount(int client_fd, Register request);
-    void LoginClient(int client_fd, Login request);
-    void ForwardChat(int client_fd, SendChat request);
+    std::unique_ptr<Message> HandleBufferedRequest(int client_fd);
+    template <typename T>
+    std::unique_ptr<Message> HandleBufferedRequestAs(int client_fd);
+    template <typename T>
+    std::unique_ptr<Message> HandleRequest(int client_fd, T request);
 
     public:
     Server();

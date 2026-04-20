@@ -13,7 +13,7 @@ set_target_properties(Shared PROPERTIES
 )
 
 target_link_libraries(Shared PRIVATE
-    # Client
+    Client
     Logging
     Network
     Server

@@ -70,16 +70,23 @@ bool Server::HandleEvents()
             // Check if this is a request or attempt to close the connection
             if (channel.Receive(_message_buffer) > 0)
             {
+                std::unique_ptr<Message> response;
+
                 if (_sessions.GetRequestsLastMinute(client_fd) < _max_requests_per_minute) {
                     _sessions.SubmitRequestTimestamp(client_fd);
-                    HandleRequest(_epoll_events[i].data.fd);
+                    response = HandleBufferedRequest(client_fd);
                 }
                 else
                 {
-                    std::string error = "Rate limit of " + std::to_string(client_fd) + " exceeded (" + std::to_string(_max_requests_per_minute) + " requests per minute";
+                    std::string error = "Rate limit exceeded (" + std::to_string(_max_requests_per_minute) + " requests per minute)";
                     Logger::GetInstance().Error("[Server] " + error);
-                    SendResponse(channel, Failure(error));
+                    response = std::make_unique<Failure>(error);
                 }
+
+                if (SendResponse(channel, *response))
+                    Logger::GetInstance().Info("[Server] Sent: \"" + response->ToString() + "\"");
+                else
+                    Logger::GetInstance().Error("[Server] Failed to send: \"" + response->ToString() + "\"");
             }
             else
             {
@@ -115,95 +122,95 @@ void Server::CloseConnection(int client_fd)
     _sessions.Destroy(client_fd);
 }
 
+bool Server::SendResponse(SecureChannel& channel, Message& message)
+{
+    return message.Serialize(_message_buffer) && channel.Send(_message_buffer) != -1;
+}
 bool Server::SendResponse(SecureChannel& channel, Message&& message)
 {
-    
-    bool success = message.Serialize(_message_buffer) && channel.Send(_message_buffer) != -1;
-    if (success)
-        Logger::GetInstance().Info("[Server] Sent response: \"" + message.ToString() + "\"");
-    else
-        Logger::GetInstance().Error("[Server] Failed to send response: \"" + message.ToString() + "\"");
-    return success;
+    return message.Serialize(_message_buffer) && channel.Send(_message_buffer) != -1;
 }
 
-void Server::HandleRequest(int client_fd)
+std::unique_ptr<Message> Server::HandleBufferedRequest(int client_fd)
 {
-    bool parsed = false;
     ByteReader reader (_message_buffer);
     uint8_t type_id;
     if (reader.Read(&type_id, sizeof(type_id)))
     {
         Logger::GetInstance().Trace("[Server] Request Type ID: \"" + std::to_string(type_id) + "\"");
-        if (type_id == Register::TypeId)
-        {
-            Register request;
-            if (request.Deserialize(_message_buffer))
-            {
-                Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
-                RegisterAccount(client_fd, request);
-                parsed = true;
-            }
-        }
-        else if (type_id == Login::TypeId)
-        {
-            Login request;
-            if (request.Deserialize(_message_buffer))
-            {
-                Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
-                LoginClient(client_fd, request);
-                parsed = true;
-            }
-        }
-        else if (type_id == SendChat::TypeId)
-        {
-            SendChat request;
-            if (request.Deserialize(_message_buffer))
-            {
-                Logger::GetInstance().Info("[Server] Received Request: \"" + request.ToString() + "\"");
-                ForwardChat(client_fd, request);
-                parsed = true;
-            }
-        }
-    }
 
-    if (!parsed)
-        SendResponse(_sessions.GetChannel(client_fd), Failure("Failed to parse request"));
+        switch (type_id)
+        {
+            case Ping::TypeId:          return HandleBufferedRequestAs<Ping>(client_fd);
+            case Register::TypeId:      return HandleBufferedRequestAs<Register>(client_fd);
+            case Login::TypeId:         return HandleBufferedRequestAs<Login>(client_fd);  
+            case SendChat::TypeId:      return HandleBufferedRequestAs<SendChat>(client_fd);
+        }
+        return std::make_unique<Failure>("Type ID unrecognized");
+    }
+    return std::make_unique<Failure>("Failed to read type ID");
 }
 
-void Server::RegisterAccount(int client_fd, Register request)
+template <typename T>
+std::unique_ptr<Message> Server::HandleBufferedRequestAs(int client_fd)
 {
+    T request;
+    if (request.Deserialize(_message_buffer))
+    {
+        Logger::GetInstance().Info("[Server] Received: \"" + request.ToString() + "\"");
+        return HandleRequest<T>(client_fd, request);
+    }
+    return std::make_unique<Failure>("Request deserialization failed");
+}
+template std::unique_ptr<Message> Server::HandleBufferedRequestAs<Ping>(int client_fd);
+template std::unique_ptr<Message> Server::HandleBufferedRequestAs<Login>(int client_fd);
+template std::unique_ptr<Message> Server::HandleBufferedRequestAs<Register>(int client_fd);
+template std::unique_ptr<Message> Server::HandleBufferedRequestAs<SendChat>(int client_fd);
+
+template<>
+std::unique_ptr<Message>  Server::HandleRequest(int client_fd, Ping request)
+{
+    (void) client_fd;
+    (void) request;
+
+    return std::make_unique<Success>();
+}
+
+template<>
+std::unique_ptr<Message>  Server::HandleRequest(int client_fd, Register request)
+{
+    (void) client_fd;
+
     int error = _accounts.Register(request.username, request.password);
     if (error == 0)
-        SendResponse(_sessions.GetChannel(client_fd), Success());
+        return std::make_unique<Success>();
     else
-        SendResponse(_sessions.GetChannel(client_fd), Failure(AccountRegistry::ErrorString(error)));
+        return std::make_unique<Failure>(AccountRegistry::ErrorString(error));
 }
 
-void Server::LoginClient(int client_fd, Login request)
+template<>
+std::unique_ptr<Message> Server::HandleRequest(int client_fd, Login request)
 {
-    auto& channel = _sessions.GetChannel(client_fd);
-
     if (_accounts.Contains(request.username) && _accounts.MatchingPassword(request.username, request.password))
         if (_sessions.Authenticate(client_fd, request.username))
-            SendResponse(channel, Success());
+            return std::make_unique<Success>();
         else
-            SendResponse(channel, Failure("A user is already logged in under that account"));
+            return std::make_unique<Failure>("A user is already logged in under that account");
     else
-        SendResponse(channel, Failure("Incorrect password or username"));
+        return std::make_unique<Failure>("Incorrect password or username");
 }
 
-void Server::ForwardChat(int client_fd, SendChat request)
+template<>
+std::unique_ptr<Message> Server::HandleRequest(int client_fd, SendChat request)
 {
-    auto& channel = _sessions.GetChannel(client_fd);
-
     if (_sessions.IsAuthenticated(client_fd))
         if (_sessions.IsEstablished(request.to))
             if (SendResponse(_sessions.GetChannel(request.to), ReceiveChat(_sessions.GetUsername(client_fd), request.content)))
-                SendResponse(channel, Success());
+                return std::make_unique<Success>();
             else
-                SendResponse(channel, Failure("Chat failed to send"));
+                return std::make_unique<Failure>("Chat failed to send");
         else
-            SendResponse(channel, Failure("Recipient does not exist"));
+            return std::make_unique<Failure>("Recipient does not exist");
     else
-        SendResponse(channel, Failure("Client unauthenticated"));
+        return std::make_unique<Failure>("Client unauthenticated");
 }
