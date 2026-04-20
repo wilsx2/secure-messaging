@@ -4,6 +4,15 @@
 #include <string>
 #include <variant>
 
+struct Ping : public Message
+{
+    static constexpr uint8_t TypeId {255};
+
+    Ping() = default;
+    bool Serialize(std::vector<uint8_t>& bytes);
+    bool Deserialize(const std::vector<uint8_t>& bytes);
+};
+
 struct Login : public Message
 {
     static constexpr uint8_t TypeId {0};
@@ -129,7 +138,7 @@ struct StringList : public Message
 
     StringList() = default;
     StringList(std::vector<std::string>&& value)
-        : request_id(request_id), value(value) { }
+        : value(value) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
 };

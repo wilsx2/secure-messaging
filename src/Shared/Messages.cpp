@@ -1,6 +1,22 @@
 #include "Shared/Messages.h"
 #include "Network/Serialization.h"
 
+bool Ping::Serialize(std::vector<uint8_t>& bytes)
+{
+    uint8_t type_id = TypeId;
+
+    ByteWriter writer(bytes);
+    return writer.Write(&type_id, sizeof(type_id));
+}
+bool Ping::Deserialize(const std::vector<uint8_t>& bytes)
+{
+    uint8_t type_id;
+
+    ByteReader reader(bytes);
+    return reader.Read(&type_id, sizeof(type_id))
+        && type_id == TypeId;
+}
+
 bool Login::Serialize(std::vector<uint8_t>& bytes)
 {
     uint8_t type_id = TypeId;

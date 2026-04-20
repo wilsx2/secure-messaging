@@ -4,25 +4,25 @@
 #include "Network/TcpSocket.h"
 #include "Network/Message.h"
 #include "Logging/Logger.h"
+#include "Shared/Messages.h"
 #include <optional>
+#include <expected>
 #include <memory>
 
 class Client
 {
     private:
     SecureChannel _channel;
-    std::string _username;
-    bool _authenticated;
+    std::vector<uint8_t> _message_buffer;
+    std::vector<ReceiveChat> _inbox;
     bool _connected;
 
-    void HandleResponse(const Message& message);
 
     public:
     Client();
     void Connect();
     void Disconnect();
-    bool Connected();
-    void SendRequest(const Message& msg);
-    Message AwaitResponse();
-    // TODO: std::optional<Message> TryResponse();
+    bool IsConnected();
+    std::vector<ReceiveChat>&& GetUnread();
+    std::expected<Response, RequestError> SendRequest(Message& request); //TODO: Add timeout
 };
