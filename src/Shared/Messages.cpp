@@ -1,5 +1,6 @@
 #include "Shared/Messages.h"
 #include "Network/Serialization.h"
+#include <ranges>
 
 bool Ping::Serialize(std::vector<uint8_t>& bytes)
 {
@@ -15,6 +16,10 @@ bool Ping::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId;
+}
+std::string Ping::ToString()
+{
+    return "Ping";
 }
 
 bool Login::Serialize(std::vector<uint8_t>& bytes)
@@ -44,6 +49,10 @@ bool Login::Deserialize(const std::vector<uint8_t>& bytes)
         && reader.Read(&password_size, sizeof(password_size))
         && (password.resize(password_size), reader.Read(password.data(), password_size));
 }
+std::string Login::ToString()
+{
+    return "Login: " + username + ", " + password;
+}
 
 bool Register::Serialize(std::vector<uint8_t>& bytes)
 {
@@ -72,6 +81,10 @@ bool Register::Deserialize(const std::vector<uint8_t>& bytes)
         && reader.Read(&password_size, sizeof(password_size))
         && (password.resize(password_size), reader.Read(password.data(), password_size));
 }
+std::string Register::ToString()
+{
+    return "Register: " + username + ", " + password;
+}
 
 bool Logout::Serialize(std::vector<uint8_t>& bytes)
 {
@@ -88,6 +101,10 @@ bool Logout::Deserialize(const std::vector<uint8_t>& bytes)
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId;
 }
+std::string Logout::ToString()
+{
+    return "Logout";
+}
 
 bool DeleteAccount::Serialize(std::vector<uint8_t>& bytes)
 {
@@ -103,6 +120,10 @@ bool DeleteAccount::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId;
+}
+std::string DeleteAccount::ToString()
+{
+    return "Delete Account";
 }
 
 bool ChangePassword::Serialize(std::vector<uint8_t>& bytes)
@@ -126,6 +147,10 @@ bool ChangePassword::Deserialize(const std::vector<uint8_t>& bytes)
         && reader.Read(&new_password_size, sizeof(new_password_size))
         && (new_password.resize(new_password_size), reader.Read(new_password.data(), new_password_size));
 }
+std::string ChangePassword::ToString()
+{
+    return "Change Password: " + new_password;
+}
 
 bool ActiveUsers::Serialize(std::vector<uint8_t>& bytes)
 {
@@ -141,6 +166,10 @@ bool ActiveUsers::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId;
+}
+std::string ActiveUsers::ToString()
+{
+    return "Active Users";
 }
 
 bool SendChat::Serialize(std::vector<uint8_t>& bytes)
@@ -170,6 +199,10 @@ bool SendChat::Deserialize(const std::vector<uint8_t>& bytes)
         && reader.Read(&content_size, sizeof(content_size))
         && (content.resize(content_size), reader.Read(content.data(), content_size));
 }
+std::string SendChat::ToString()
+{
+    return "Send Chat: To " + to + " - ";
+}
 
 bool ReceiveChat::Serialize(std::vector<uint8_t>& bytes)
 {
@@ -198,6 +231,10 @@ bool ReceiveChat::Deserialize(const std::vector<uint8_t>& bytes)
         && reader.Read(&content_size, sizeof(content_size))
         && (content.resize(content_size), reader.Read(content.data(), content_size));
 }
+std::string ReceiveChat::ToString()
+{
+    return "Receive Chat: From " + from + " - ";
+}
 
 bool Success::Serialize(std::vector<uint8_t>& bytes)
 {
@@ -213,6 +250,10 @@ bool Success::Deserialize(const std::vector<uint8_t>& bytes)
     ByteReader reader(bytes);
     return reader.Read(&type_id, sizeof(type_id))
         && type_id == TypeId;
+}
+std::string Success::ToString()
+{
+    return "Success";
 }
 
 bool Failure::Serialize(std::vector<uint8_t>& bytes)
@@ -235,6 +276,10 @@ bool Failure::Deserialize(const std::vector<uint8_t>& bytes)
         && type_id == TypeId
         && reader.Read(&what_size, sizeof(what_size))
         && (what.resize(what_size), reader.Read(what.data(), what_size));
+}
+std::string Failure::ToString()
+{
+    return "Failure: " + what;
 }
 
 bool StringList::Serialize(std::vector<uint8_t>& bytes)
@@ -277,4 +322,11 @@ bool StringList::Deserialize(const std::vector<uint8_t>& bytes)
     }
 
     return true;
+}
+std::string StringList::ToString()
+{
+    std::string output = "String List: ";
+    for (auto& c : value | std::views::join_with(','))
+        output += c;
+    return output;
 }

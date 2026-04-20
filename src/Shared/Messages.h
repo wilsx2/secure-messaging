@@ -11,6 +11,7 @@ struct Ping : public Message
     Ping() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct Login : public Message
@@ -24,6 +25,7 @@ struct Login : public Message
         : username(username), password(password) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct Register : public Message
@@ -38,6 +40,7 @@ struct Register : public Message
         : username(username), password(password) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct Logout : public Message
@@ -47,6 +50,7 @@ struct Logout : public Message
     Logout() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct DeleteAccount : public Message
@@ -56,6 +60,7 @@ struct DeleteAccount : public Message
     DeleteAccount() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct ChangePassword : public Message
@@ -69,6 +74,7 @@ struct ChangePassword : public Message
         : new_password(new_password) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct ActiveUsers : public Message
@@ -78,6 +84,7 @@ struct ActiveUsers : public Message
     ActiveUsers() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct SendChat : public Message
@@ -92,6 +99,7 @@ struct SendChat : public Message
         : to(to), content(content) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct ReceiveChat : public Message
@@ -106,6 +114,7 @@ struct ReceiveChat : public Message
         : from(from), content(content) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct Success : public Message
@@ -115,6 +124,7 @@ struct Success : public Message
     Success() = default;
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct Failure : public Message
@@ -128,6 +138,7 @@ struct Failure : public Message
         : what(what) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 struct StringList : public Message
@@ -141,6 +152,7 @@ struct StringList : public Message
         : value(value) { }
     bool Serialize(std::vector<uint8_t>& bytes);
     bool Deserialize(const std::vector<uint8_t>& bytes);
+    std::string ToString();
 };
 
 enum class RequestError { Send, Disconnected, Timeout, Serialization, Deserialization };
