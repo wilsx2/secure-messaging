@@ -23,11 +23,11 @@ void ClientCLI::RunCommand(Command command)
     {
         // Send Request
         auto request = std::get<Request>(command);
-        auto outcome = std::visit([&](Message& m){ return _session.SendRequest(m); }, request);
+        auto outcome = _session.SendRequest(RequestRef(request));
 
         // Print response/error
         if (outcome.has_value())
-            std::cout << std::visit([](Message& m){ return m.ToString(); }, outcome.value()) << std::endl;
+            std::cout << ResponseRef(outcome.value()).ToString() << std::endl;
         else
             std::cout << "Error: " << RequestErrorAsString(outcome.error()) << std::endl;
     }

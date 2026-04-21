@@ -343,3 +343,12 @@ std::string RequestErrorAsString(RequestError error)
     }
     return "What";
 }
+
+Message& RequestRef(Request& r)
+{
+    return std::visit([](auto& m) -> Message& { return m; }, r);
+}
+Message& ResponseRef(Response& r)
+{
+    return std::visit([](auto& m) -> Message& { return m; }, r);
+}
