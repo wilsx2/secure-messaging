@@ -42,56 +42,42 @@ bool Server::HandleEvents()
     for (int i = 0; i < num_events; ++i)
     {
         Logger::GetInstance().Trace("[Server] Handling event");
-        if (_epoll_events[i].data.fd == _socket.GetFd())
+        int fd = _epoll_events[i].data.fd;
+
+        if (fd == _socket.GetFd())
         {
             // Accept new connection
             Logger::GetInstance().Trace("[Server] Event coming from new client");
             int client_fd = _socket.Accept();
-            if (client_fd == -1)
-                continue;
-            EstablishConnection(client_fd);
+            if (client_fd != -1)
+                EstablishConnection(client_fd);
         }
         else
         {
             Logger::GetInstance().Trace("[Server] Event coming from connected client");
-            int client_fd = _epoll_events[i].data.fd;
+            int client_fd = fd;
 
             // Check for secure channel between server and client
-            if (!_sessions.IsEstablished(client_fd))
+            if (_sessions.IsEstablished(client_fd))
             {
-                Logger::GetInstance().Error("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
-                continue;
-            }
+                // Receive across secure channel
+                SecureChannel& channel = _sessions.GetChannel(client_fd);
+                Logger::GetInstance().Trace("[Server] Receiving data across secure channel");
 
-            // Receive across secure channel
-            SecureChannel& channel = _sessions.GetChannel(client_fd);
-            Logger::GetInstance().Trace("[Server] Receiving data across secure channel");
-
-            // Check if this is a request or attempt to close the connection
-            if (channel.Receive(_message_buffer) > 0)
-            {
-                std::unique_ptr<Message> response;
-
-                if (_sessions.GetRequestsLastMinute(client_fd) < _max_requests_per_minute) {
-                    _sessions.SubmitRequestTimestamp(client_fd);
-                    response = HandleBufferedRequest(client_fd);
-                }
-                else
+                // Check if this is a request or attempt to close the connection
+                if (channel.Receive(_message_buffer) > 0)
                 {
-                    std::string error = "Rate limit exceeded (" + std::to_string(_max_requests_per_minute) + " requests per minute)";
-                    Logger::GetInstance().Error("[Server] " + error);
-                    response = std::make_unique<Failure>(error);
+                    std::unique_ptr<Message> response (HandleBufferedRequest(client_fd));
+                    if (SendResponse(channel, *response))
+                        Logger::GetInstance().Info("[Server] Sent: \"" + response->ToString() + "\"");
+                    else
+                        Logger::GetInstance().Error("[Server] Failed to send: \"" + response->ToString() + "\"");
                 }
-
-                if (SendResponse(channel, *response))
-                    Logger::GetInstance().Info("[Server] Sent: \"" + response->ToString() + "\"");
                 else
-                    Logger::GetInstance().Error("[Server] Failed to send: \"" + response->ToString() + "\"");
+                    CloseConnection(client_fd);
             }
             else
-            {
-                CloseConnection(client_fd);
-            }
+                Logger::GetInstance().Error("[Server] Received request from host without secure connection: " + std::to_string(client_fd));
         }
     }
 
