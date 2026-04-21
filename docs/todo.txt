@@ -1,39 +1,31 @@
+Fundamental
+[ ] TcpSocket cleanup (make more robust; this is vague because I don't know what I want. That is to be figured out)
+[ ] TcpListener specification for the Server use case
+[ ] TcpMultiplexer (wrapper about epoll, consider epoll out)
+[ ] Pull cryptography out of SecureChannel
+[ ] SQLite wrapper and integration
+[ ] More requests (Query chats, delete, change password, active users, etc)
+
+Performance
+[ ] Benchmarking Testing
+[ ] Multithreaded Server
+[ ] Consider async IO
+
 Security
-[X] Random Salt
-[/] RSA/TLS Authentication of Server
+[ ] Password policy
+[ ] Rate limiting rule system
+[ ] SQL injection defense
 
-Accounts / Authentication
-[X] Registration and login with passwords
-[X] Password validation
-[ ] *Password file
-[ ] *Password policy mutability
-[X] Password hashing
-[X] Naive Rate limiting
-[ ] ? Rate Limiting Rule System
-[ ] *Delete / Rename / Change Password
-
-Errors
-[ ] Commit to Error Codes
-[ ] Handle all errors
-[ ] Log all errors
-[ ] Replace CheckSyscall
-
-Networking
-[X] Handle closed connections on the Client
-[ ] Handle TCP Except
-[ ] Receive Buffer
-[ ] epoll out for handling large messages
-
-Testing
-[ ] *Measurably test speed by some valuable metric
+Application
+[ ] NCurses wrapper
+[ ] ClientTUI
+[ ] ServerTUI
+[ ] Configuration through command line args
+[ ] Configuration file
 
 Documentation
-[ ] Logging
-    [ ] Format specification
-    [ ] Harness (Tags messages with source class)
-
-Other
-[ ] epoll wrapper class
-[X] Refactor to combine includes and src in one directory with sub-directories
-[ ] *CLI arguments for server address and port
-[ ] *Config rate limit, log file location, port, password policy, etc on server side
+[ ] FileLog
+[ ] Log all errors
+[ ] Docustrings
+[ ] Holistic test set
+[ ] README

@@ -2,7 +2,7 @@
 
 bool SessionManager::Create(int fd)
 {
-    Session session { SecureChannel(fd), "", false, {}};
+    Session session { SecureChannel(fd), "", false };
 
     bool success = session.channel.EstablishKey(HostType::Server);
     if (success)
