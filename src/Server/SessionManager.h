@@ -14,7 +14,6 @@ class SessionManager
         SecureChannel channel;
         std::string username;
         bool authenticated;
-        std::deque<std::chrono::time_point<std::chrono::system_clock>> requests_last_minute;
     };
     std::map<int, Session> _sessions;
     std::map<std::string, int> _user_to_fd;
@@ -37,10 +36,4 @@ class SessionManager
     const std::string& GetUsername(int fd) const;
     bool Authenticate(int fd, const std::string& username);
     bool Unauthenticate(int fd);
-
-    // Rate Limiting
-    int GetRequestsLastMinute(int fd);
-    void SubmitRequestTimestamp(int fd);
-
-    friend Session;
 };

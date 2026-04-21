@@ -1,14 +1,8 @@
 Networking (potentially OS agnostic)
 	TcpSocket: Wrapper around low level sockets
 	TcpMultiplexer: Wrapper around low level epoll (potentially wepoll)
-Messaging
-	Serialize<T>(bytes): Append T as byte data. Must be implemented for non trivially copiable types. Must append type ID.
-	Deserialize<T>(bytes): Get T from byte data. Must be implemented for non trivially copiable types. Validates type ID.
-	Serialize<str>(): Implementation for string. Prepends size.
-	Deserialize<str>(): Implementation for string. Uses prepended size.
-	CallbackDiscriminator: Maps parameter types to function callbacks
-		Register<T>(func): Curries the function inside one which deserializes bytes into T and then calls the original. Adds to list of callbacks
-		Call(bytes): Uses type ID appended in Serialize to find and call with the matching function
+	Message: Interface for serializable type
+	ByteReader/Writer: Iterates a byte vector, progressively reading/writing data 
 Cryptography (depends on CryptoPP)
 	Hash(): Produces output hash from input
 	SecureKey: Stores a byte key. Can be used to encrypt and decrypt bytes.
@@ -29,5 +23,13 @@ Client
 	ClientTUI
 Server
 	Server:
-		Accepts connections from a TcpSocket and adds them to a TcpMultiplexer with secure keys.
-		Decrypts requests, uses CallbackDiscriminator to run relevant Database commands, and sends back encrypted responses.
+		Accepts connections from a TcpSocket, then adds them to a TcpMultiplexer and SessionManager.
+		Decrypts requests, runs relevant Database commands, and sends back encrypted responses.
+	SessionManager: Stores live client connections, with auth information and security keys
+		map<username: str, fd: int>
+		map<fd: int, Session>
+			TcpSocket
+			SecureKey
+			username: str
+	? RateLimiter ?
+	? Password/UsernamePolicy ?
