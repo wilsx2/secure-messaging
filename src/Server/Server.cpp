@@ -67,11 +67,12 @@ bool Server::HandleEvents()
                 // Check if this is a request or attempt to close the connection
                 if (channel.Receive(_message_buffer) > 0)
                 {
-                    std::unique_ptr<Message> response (HandleBufferedRequest(client_fd));
-                    if (SendResponse(channel, *response))
-                        Logger::GetInstance().Info("[Server] Sent: \"" + response->ToString() + "\"");
+                    auto response (HandleBufferedRequest(client_fd));
+                    auto& ref (ResponseRef(response));
+                    if (SendResponse(channel, ref))
+                        Logger::GetInstance().Info("[Server] Sent: \"" + ref.ToString() + "\"");
                     else
-                        Logger::GetInstance().Error("[Server] Failed to send: \"" + response->ToString() + "\"");
+                        Logger::GetInstance().Error("[Server] Failed to send: \"" + ref.ToString() + "\"");
                 }
                 else
                     CloseConnection(client_fd);
@@ -117,7 +118,7 @@ bool Server::SendResponse(SecureChannel& channel, Message&& message)
     return message.Serialize(_message_buffer) && channel.Send(_message_buffer) != -1;
 }
 
-std::unique_ptr<Message> Server::HandleBufferedRequest(int client_fd)
+Response Server::HandleBufferedRequest(int client_fd)
 {
     ByteReader reader (_message_buffer);
     uint8_t type_id;
@@ -132,13 +133,13 @@ std::unique_ptr<Message> Server::HandleBufferedRequest(int client_fd)
             case Login::TypeId:         return HandleBufferedRequestAs<Login>(client_fd);  
             case SendChat::TypeId:      return HandleBufferedRequestAs<SendChat>(client_fd);
         }
-        return std::make_unique<Failure>("Type ID unrecognized");
+        return Failure("Type ID unrecognized");
     }
-    return std::make_unique<Failure>("Failed to read type ID");
+    return Failure("Failed to read type ID");
 }
 
 template <typename T>
-std::unique_ptr<Message> Server::HandleBufferedRequestAs(int client_fd)
+Response Server::HandleBufferedRequestAs(int client_fd)
 {
     T request;
     if (request.Deserialize(_message_buffer))
@@ -146,57 +147,57 @@ std::unique_ptr<Message> Server::HandleBufferedRequestAs(int client_fd)
         Logger::GetInstance().Info("[Server] Received: \"" + request.ToString() + "\"");
         return HandleRequest<T>(client_fd, request);
     }
-    return std::make_unique<Failure>("Request deserialization failed");
+    return Failure("Request deserialization failed");
 }
-template std::unique_ptr<Message> Server::HandleBufferedRequestAs<Ping>(int client_fd);
-template std::unique_ptr<Message> Server::HandleBufferedRequestAs<Login>(int client_fd);
-template std::unique_ptr<Message> Server::HandleBufferedRequestAs<Register>(int client_fd);
-template std::unique_ptr<Message> Server::HandleBufferedRequestAs<SendChat>(int client_fd);
+template Response Server::HandleBufferedRequestAs<Ping>(int client_fd);
+template Response Server::HandleBufferedRequestAs<Login>(int client_fd);
+template Response Server::HandleBufferedRequestAs<Register>(int client_fd);
+template Response Server::HandleBufferedRequestAs<SendChat>(int client_fd);
 
 template<>
-std::unique_ptr<Message>  Server::HandleRequest(int client_fd, Ping request)
+Response Server::HandleRequest(int client_fd, Ping request)
 {
     (void) client_fd;
     (void) request;
 
-    return std::make_unique<Success>();
+    return Success();
 }
 
 template<>
-std::unique_ptr<Message>  Server::HandleRequest(int client_fd, Register request)
+Response Server::HandleRequest(int client_fd, Register request)
 {
     (void) client_fd;
 
     int error = _accounts.Register(request.username, request.password);
     if (error == 0)
-        return std::make_unique<Success>();
+        return Success();
     else
-        return std::make_unique<Failure>(AccountRegistry::ErrorString(error));
+        return Failure(AccountRegistry::ErrorString(error));
 }
 
 template<>
-std::unique_ptr<Message> Server::HandleRequest(int client_fd, Login request)
+Response Server::HandleRequest(int client_fd, Login request)
 {
     if (_accounts.Contains(request.username) && _accounts.MatchingPassword(request.username, request.password))
         if (_sessions.Authenticate(client_fd, request.username))
-            return std::make_unique<Success>();
+            return Success();
         else
-            return std::make_unique<Failure>("A user is already logged in under that account");
+            return Failure("A user is already logged in under that account");
     else
-        return std::make_unique<Failure>("Incorrect password or username");
+        return Failure("Incorrect password or username");
 }
 
 template<>
-std::unique_ptr<Message> Server::HandleRequest(int client_fd, SendChat request)
+Response Server::HandleRequest(int client_fd, SendChat request)
 {
     if (_sessions.IsAuthenticated(client_fd))
         if (_sessions.IsEstablished(request.to))
             if (SendResponse(_sessions.GetChannel(request.to), ReceiveChat(_sessions.GetUsername(client_fd), request.content)))
-                return std::make_unique<Success>();
+                return Success();
             else
-                return std::make_unique<Failure>("Chat failed to send");
+                return Failure("Chat failed to send");
         else
-            return std::make_unique<Failure>("Recipient does not exist");
+            return Failure("Recipient does not exist");
     else
-        return std::make_unique<Failure>("Client unauthenticated");
+        return Failure("Client unauthenticated");
 }

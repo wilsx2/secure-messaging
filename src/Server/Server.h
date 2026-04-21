@@ -36,11 +36,11 @@ class Server
     bool SendResponse(SecureChannel& channel, Message& message);
     bool SendResponse(SecureChannel& channel, Message&& message);
 
-    std::unique_ptr<Message> HandleBufferedRequest(int client_fd);
+    Response HandleBufferedRequest(int client_fd);
     template <typename T>
-    std::unique_ptr<Message> HandleBufferedRequestAs(int client_fd);
+    Response HandleBufferedRequestAs(int client_fd);
     template <typename T>
-    std::unique_ptr<Message> HandleRequest(int client_fd, T request);
+    Response HandleRequest(int client_fd, T request);
 
     public:
     Server();
