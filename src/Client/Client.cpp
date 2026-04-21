@@ -32,9 +32,11 @@ bool Client::IsConnected()
     return _connected;
 }
 
-std::vector<ReceiveChat>&& Client::GetUnread()
+std::vector<ReceiveChat> Client::GetUnread()
 {
-    return std::move(_inbox);
+    std::vector<ReceiveChat> output = std::move(_inbox);
+    _inbox.clear();
+    return output;
 }
 
 std::expected<Response, RequestError> Client::SendRequest(Message& request)
@@ -43,45 +45,49 @@ std::expected<Response, RequestError> Client::SendRequest(Message& request)
     
     if (request.Serialize(_message_buffer))
         if (_channel.Send(_message_buffer))
-            while (true)
-            {
-                if (_channel.Receive(_message_buffer) > 0)
-                {
-                    ByteReader reader (_message_buffer);
-                    uint8_t type_id;
-                    reader.Peek(&type_id, sizeof(type_id));
-                    if (type_id == Success::TypeId)
-                    {
-                        Success success;
-                        if (success.Deserialize(_message_buffer))
-                            return success;
-                        else
-                            return std::unexpected(RequestError::Deserialization);
-                    }
-                    else if (type_id == Failure::TypeId)
-                    {
-                        Failure failure;
-                        if (failure.Deserialize(_message_buffer))
-                            return failure;
-                        else
-                            return std::unexpected(RequestError::Deserialization);
-                    }
-                    else if (type_id == ReceiveChat::TypeId)
-                    {
-                        ReceiveChat chat;
-                        if (chat.Deserialize(_message_buffer))
-                            _inbox.push_back(chat);
-                        else
-                            return std::unexpected(RequestError::Deserialization);
-                    }
-                    else
-                        return std::unexpected(RequestError::Deserialization);
-                }
-                else
-                    return std::unexpected(RequestError::Disconnected);
-            }
+            return GetResponse();
         else
             return std::unexpected(RequestError::Send);
     else
         return std::unexpected(RequestError::Serialization);
 }
+
+std::expected<Response, RequestError> Client::GetResponse()
+{
+    if (_channel.Receive(_message_buffer) > 0)
+    {
+        ByteReader reader (_message_buffer);
+        uint8_t type_id;
+        reader.Peek(&type_id, sizeof(type_id));
+        switch (type_id)
+        {
+            case Success::TypeId:       return DeserializeAs<Success>();
+            case Failure::TypeId:       return DeserializeAs<Failure>();
+            case ReceiveChat::TypeId:
+            {
+                // Our exchange was interrupted by a chat, try to push it onto our inbox and await the real response
+                auto chat = DeserializeAs<ReceiveChat>();
+                if (chat.has_value())
+                {
+                    _inbox.push_back(chat.value());
+                    return GetResponse();
+                }
+                return chat;
+            }
+            default: return std::unexpected(RequestError::Deserialization);
+        }
+    }
+    return std::unexpected(RequestError::Disconnected);
+}
+
+template <typename T>
+std::expected<T, RequestError> Client::DeserializeAs()
+{
+    T response;
+    if (response.Deserialize(_message_buffer))
+        return response;
+    return std::unexpected(RequestError::Deserialization);
+}
+template std::expected<Success, RequestError> Client::DeserializeAs<Success>();
+template std::expected<Failure, RequestError> Client::DeserializeAs<Failure>();
+template std::expected<ReceiveChat, RequestError> Client::DeserializeAs<ReceiveChat>();

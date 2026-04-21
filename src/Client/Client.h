@@ -17,12 +17,15 @@ class Client
     std::vector<ReceiveChat> _inbox;
     bool _connected;
 
+    std::expected<Response, RequestError> GetResponse();
+    template<typename T>
+    std::expected<T, RequestError> DeserializeAs();
 
     public:
     Client();
     void Connect();
     void Disconnect();
     bool IsConnected();
-    std::vector<ReceiveChat>&& GetUnread();
-    std::expected<Response, RequestError> SendRequest(Message& request); //TODO: Add timeout
+    std::vector<ReceiveChat> GetUnread();
+    std::expected<Response, RequestError> SendRequest(Message& request); // TODO: Add timeout
 };
