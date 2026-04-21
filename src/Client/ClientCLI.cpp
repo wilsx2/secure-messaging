@@ -13,53 +13,39 @@ void ClientCLI::Run()
         std::getline(std::cin, input);
 
         auto command = BuildCommand(input);
-        if (command.index() == 0)
-        {
-            auto request = std::get<Request>(command);
-            std::expected<Response, RequestError>  outcome;
-            switch (request.index())
-            {
-                case 0: outcome = _session.SendRequest(std::get<Ping>(request)); break;
-                case 1: outcome = _session.SendRequest(std::get<Login>(request)); break;
-                case 2: outcome = _session.SendRequest(std::get<Register>(request)); break;
-                case 3: outcome = _session.SendRequest(std::get<SendChat>(request)); break;
-            }
-
-            if (outcome.has_value())
-            {
-                auto response = outcome.value();
-                switch (response.index())
-                {
-                    case 0: std::cout << "Success" << std::endl; break;
-                    case 1: std::cout << "Failure: " << std::get<Failure>(response).what << std::endl; break;
-                    case 2: assert(false); break;
-                }
-            }
-            else
-            {
-                std::string error;
-                switch (outcome.error())
-                {
-                    case RequestError::Send:            error = "On send"; break;
-                    case RequestError::Disconnected:    error = "Server disconnected"; break;
-                    case RequestError::Timeout:         error = "Timeout occurred"; break;
-                    case RequestError::Serialization:   error = "Request serialization failed"; break;
-                    case RequestError::Deserialization: error = "Response deserialization failed"; break;
-                }
-                std::cout << "Error: " << error << std::endl;
-            }
-        }
-        else
-        {
-            auto command_e = std::get<CommandType>(command);
-            switch (command_e)
-            {
-                case CommandType::CheckInbox:   for(auto& chat : _session.GetUnread()) std::cout << chat.from << "] " << chat.content << std::endl; break;
-                case CommandType::Quit:         _session.Disconnect(); break;
-                case CommandType::ParseFailure: std::cout << "Command failed to parse" << std::endl; break;
-            }
-        }
+        RunCommand(command);
     }
+}
+
+void ClientCLI::RunCommand(Command command)
+{
+    if (command.index() == 0)
+    {
+        // Send Request
+        auto request = std::get<Request>(command);
+        auto outcome = std::visit([&](Message& m){ return _session.SendRequest(m); }, request);
+
+        // Print response/error
+        if (outcome.has_value())
+            std::cout << std::visit([](Message& m){ return m.ToString(); }, outcome.value()) << std::endl;
+        else
+            std::cout << "Error: " << RequestErrorAsString(outcome.error()) << std::endl;
+    }
+    else
+        // Non-sending command
+        switch (std::get<CommandType>(command))
+        {
+            case CommandType::CheckInbox:   
+                for(auto& chat : _session.GetUnread())
+                    std::cout << chat.from << "] " << chat.content << std::endl;
+                break;
+            case CommandType::Quit:
+                _session.Disconnect();
+                break;
+            case CommandType::ParseFailure:
+                std::cout << "Command failed to parse" << std::endl;
+                break;
+        }
 }
 
 ClientCLI::Command ClientCLI::BuildCommand(const std::string& command)

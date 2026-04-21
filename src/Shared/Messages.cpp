@@ -330,3 +330,16 @@ std::string StringList::ToString()
         output += c;
     return output;
 }
+
+std::string RequestErrorAsString(RequestError error)
+{
+    switch (error)
+    {
+        case RequestError::Send:            return "On send";
+        case RequestError::Disconnected:    return "Server disconnected";
+        case RequestError::Timeout:         return "Timeout occurred";
+        case RequestError::Serialization:   return "Request serialization failed";
+        case RequestError::Deserialization: return "Response deserialization failed";
+    }
+    return "What";
+}

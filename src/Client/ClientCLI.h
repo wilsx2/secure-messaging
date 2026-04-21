@@ -13,6 +13,7 @@ class ClientCLI
 
     std::vector<std::string> ParseCommandArguments(const std::string& str);
     Command BuildCommand(const std::string& command);
+    void RunCommand(Command command);
 
     public:
     ClientCLI() = default;
