@@ -17,5 +17,4 @@ target_link_libraries(Server PRIVATE
     Logging
     Network
     Shared
-    cryptopp
 )

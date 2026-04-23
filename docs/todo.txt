@@ -2,8 +2,11 @@ Fundamental
 [ ] TcpSocket cleanup
     [X] Address class
     [X] Separate listening and connecting sockets
-    [ ] Test blocking
+    [ ] Test
 [ ] Pull cryptography out of SecureChannel
+    [X] Crypto module
+    [ ] Test
+    [ ] Reimplement behavior
     [ ] Do not send entire buffer if entire buffer is not used
 [ ] TcpMultiplexer (wrapper about epoll, consider epoll out)
 [ ] SQLite wrapper and integration
@@ -15,7 +18,7 @@ Performance
 [ ] Consider async IO
 
 Security
-[ ] Password policy
+[ ] Password policyClient 
 [ ] Rate limiting rule system
 [ ] SQL injection defense
 

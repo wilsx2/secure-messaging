@@ -14,6 +14,14 @@ int TcpClient::GetRemotePort() const
     return _port;
 }
 
+bool TcpClient::IsConnected() const
+{
+    int error = 0;
+    socklen_t len = sizeof(error);
+    int retval = getsockopt(_sockfd, SOL_SOCKET, SO_ERROR, &error, &len);
+    return retval != 0 || error != 0;
+}
+
 bool TcpClient::Connect(IpAddress remote_address, int port)
 {
     if (_sockfd != -1)
@@ -24,7 +32,7 @@ bool TcpClient::Connect(IpAddress remote_address, int port)
     uint32_t addr_int = remote_address.ToInteger();
     if (connect(_sockfd, (struct sockaddr*)&addr_int, sizeof(addr_int)) == -1)
         return false;
-        
+
     _address = remote_address;
     _port = port;
     return true;

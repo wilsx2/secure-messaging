@@ -13,6 +13,7 @@ class TcpClient : public TcpSocket
 
     std::optional<IpAddress> GetRemoteAddress() const;
     int GetRemotePort() const;
+    bool IsConnected() const;
 
     bool Connect(IpAddress remote_address, int port);
 

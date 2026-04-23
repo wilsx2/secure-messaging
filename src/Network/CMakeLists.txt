@@ -18,5 +18,4 @@ set_target_properties(Network PROPERTIES
 
 target_link_libraries(Network PRIVATE
     Logging
-    cryptopp
 )
