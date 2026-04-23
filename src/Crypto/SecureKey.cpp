@@ -17,7 +17,7 @@ using namespace CryptoPP;
 SecureKey::SecureKey(SecByteBlock&& value) : _value(value) { }
 SecureKey::SecureKey(SecureKey&& key) : _value (std::move(key._value)) { }
 
-void SecureKey::Encrypt(void* dest, const void* src, std::size_t length, uint8_t iv[IV_LENGTH])
+void SecureKey::Encrypt(void* dest, const void* src, std::size_t size, uint8_t iv[IV_LENGTH])
 {
     AES::Encryption aesEncryption(_value.BytePtr(), _value.SizeInBytes());
 
@@ -31,17 +31,17 @@ void SecureKey::Encrypt(void* dest, const void* src, std::size_t length, uint8_t
         cbcEncryption, 
         new ArraySink(
             reinterpret_cast<byte*>(dest), 
-            length
+            size
         )
     );
     stfEncryptor.Put(
         reinterpret_cast<const byte*>(src), 
-        length
+        size
     );
     stfEncryptor.MessageEnd();
 }
 
-void SecureKey::Decrypt(void* dest, const void* src, std::size_t length, uint8_t iv[IV_LENGTH])
+void SecureKey::Decrypt(void* dest, const void* src, std::size_t size, uint8_t iv[IV_LENGTH])
 {
     AES::Decryption aesDecryption (_value.BytePtr(), _value.SizeInBytes());
 
@@ -51,12 +51,12 @@ void SecureKey::Decrypt(void* dest, const void* src, std::size_t length, uint8_t
         cbcDecryption, 
         new ArraySink(
             reinterpret_cast<byte*>(dest),
-            length
+            size
         )
     );
     stfDecryptor.Put(
         reinterpret_cast<const byte*>(src),
-        length
+        size
     );
     stfDecryptor.MessageEnd();
 }

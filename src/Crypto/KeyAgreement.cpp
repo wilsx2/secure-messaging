@@ -24,24 +24,24 @@ KeyAgreement::KeyAgreement()
     _dh.GenerateKeyPair(_rng, _private_key, _public_key);
 }
 
-void* KeyAgreement::GetPublicKey(std::size_t& length)
+void KeyAgreement::GetPublicKey(uint8_t*& data, std::size_t& size)
 {
-    length = _public_key.size();
-    return _public_key.data();
+    data = _public_key.data();
+    size = _public_key.size();
 }
-void* KeyAgreement::GetOtherKey(std::size_t& length)
+void KeyAgreement::GetOtherKey(uint8_t*& data, std::size_t& size)
 {
-    length = _other_key.size();
-    return _other_key.data();
+    data = _other_key.data();
+    size = _other_key.size();
 }
-void* KeyAgreement::GetSalt(std::size_t& length)
+void KeyAgreement::GetSalt(uint8_t*& data, std::size_t& size)
 {
-    length = _salt.size();
-    return _salt.data();
+    data = _salt.data();
+    size = _salt.size();
 }
-void KeyAgreement::GenerateSalt(std::size_t length)
+void KeyAgreement::GenerateSalt(std::size_t size)
 {
-    _salt.New(length);
+    _salt.New(size);
     _rng.GenerateBlock(_salt.data(), _salt.size());
 }
 

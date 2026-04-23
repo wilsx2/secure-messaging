@@ -10,9 +10,9 @@ class KeyAgreement
     public:
     KeyAgreement() = default;
 
-    void* GetPublicKey(std::size_t& length);
-    void* GetOtherKey(std::size_t& length);
-    void* GetSalt(std::size_t& length);
+    void GetPublicKey(uint8_t*& ptr, std::size_t& length);
+    void GetOtherKey(uint8_t*& ptr, std::size_t& length);
+    void GetSalt(uint8_t*& ptr, std::size_t& length);
     void GenerateSalt(std::size_t length);
 
     std::optional<SecureKey> Agree();

@@ -5,15 +5,15 @@
 
 using namespace CryptoPP;
 
-void Hash(void* dest, const void* src, std::size_t length)
+void Hash(void* dest, const void* src, std::size_t size)
 {
     SHA256 hash;
 
     ArraySource source (
-        reinterpret_cast<const byte*>(src), length, true, 
+        reinterpret_cast<const byte*>(src), size, true, 
         new HashFilter(hash,
             new HexEncoder(
-                new ArraySink(reinterpret_cast<byte*>(dest), length)
+                new ArraySink(reinterpret_cast<byte*>(dest), size)
             )
         )
     );
