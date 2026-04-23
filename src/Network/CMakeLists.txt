@@ -1,8 +1,11 @@
 project(Network)
 
 add_library(Network STATIC
+    IpAddress.cpp
     SecureChannel.cpp
     Serialization.cpp
+    TcpClient.cpp
+    TcpListener.cpp
     TcpSocket.cpp
 )
 

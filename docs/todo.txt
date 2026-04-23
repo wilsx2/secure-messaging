@@ -1,8 +1,11 @@
 Fundamental
-[ ] TcpSocket cleanup (make more robust; this is vague because I don't know what I want. That is to be figured out)
-[ ] TcpListener specification for the Server use case
-[ ] TcpMultiplexer (wrapper about epoll, consider epoll out)
+[ ] TcpSocket cleanup
+    [X] Address class
+    [X] Separate listening and connecting sockets
+    [ ] Test blocking
 [ ] Pull cryptography out of SecureChannel
+    [ ] Do not send entire buffer if entire buffer is not used
+[ ] TcpMultiplexer (wrapper about epoll, consider epoll out)
 [ ] SQLite wrapper and integration
 [ ] More requests (Query chats, delete, change password, active users, etc)
 

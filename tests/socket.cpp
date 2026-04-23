@@ -1,25 +1,27 @@
 #include "Shared/Global.h"
-#include "Network/TcpSocket.h"
+#include "Network/TcpListener.h"
+#include "Network/TcpClient.h"
+#include <cassert>
 
 int main()
 {
-    TcpSocket server (PORT, INADDR_ANY);
-    server.Bind();
-    server.Listen(1);
+    TcpListener listener;
+    assert(listener.Listen(IpAddress::LocalHost(), PORT));
 
-    TcpSocket client_to_server (PORT, INADDR_LOOPBACK);
-    client_to_server.Connect();
+    TcpClient client_to_server;
+    assert(client_to_server.Connect(IpAddress::LocalHost(), PORT));
 
-    TcpSocket server_to_client (server.Accept());
+    TcpClient server_to_client (std::move(listener.Accept().value()));
 
-    std::string sent_message = "Peace and love on planet Earth.";
-    std::vector<uint8_t> data (sent_message.begin(), sent_message.end());
-    server_to_client.SendBytes(data);
-    data.clear();
-    client_to_server.ReceiveBytes(data);
-    std::string received_message (data.begin(), data.end());
-
-    std::cout << "Sent: " << sent_message << std::endl;
-    std::cout << "Recv: " << received_message << std::endl;
-    return !(sent_message == received_message);
+    std::string sent_msg = "Peace and love on planet Earth.";
+    std::size_t sent_len = sent_msg.length();
+    std::string recv_msg;
+    std::size_t recv_len;
+    assert(server_to_client.Send(&sent_len, sizeof(sent_len)) == sizeof(sent_len));
+    assert(server_to_client.Send(sent_msg.data(), sent_len) == sent_len);
+    assert(client_to_server.Receive(&recv_len, sizeof(recv_len)) == sizeof(recv_len));
+    recv_msg.resize(recv_len);
+    assert(client_to_server.Receive(recv_msg.data(), recv_len) == recv_len);
+    assert(sent_msg == recv_msg);
+    return 0;
 }

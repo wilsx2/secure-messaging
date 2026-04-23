@@ -1,7 +1,8 @@
 #pragma once
 
-#include <iostream>
+#include "IpAddress.h"
 #include <vector>
+#include <expected>
 #include <cstdint>
 #include <stdio.h>
 #include <unistd.h>
@@ -11,32 +12,24 @@
 class TcpSocket
 {
     protected:
-    struct sockaddr_in _addr;
     int _sockfd;
+    IpAddress _address;
+    int _port;
 
     public:
-    TcpSocket(int port, u_long interface);
-    TcpSocket(int sockfd, struct sockaddr_in addr);
-    TcpSocket(int sockfd);
+    enum class Error { NotReady , Disconnected , Unexpected };
+    using Handle = int;
+
+    TcpSocket();
     TcpSocket(const TcpSocket&) = delete;
-    TcpSocket(TcpSocket&& other);
+    TcpSocket& operator= (const TcpSocket&) = delete;
+    TcpSocket(TcpSocket&& socket);
     ~TcpSocket();
 
-    void CheckSyscall(int result, std::string error_message);
+    void Close();
 
-    int SetNonBlocking();
+    void SetBlocking(bool blocking);
+    bool IsBlocking() const;
 
-    int Bind();
-    int Connect();
-    int Listen(int backlog);
-    int Accept();
-    int Send(const void* data, std::size_t size, int flags);
-    int SendAll(const void* data, std::size_t size);
-    int SendBytes(const std::vector<uint8_t>& bytes);
-    int Receive(void* data, std::size_t size, int flags);
-    int ReceiveAll(void* data, std::size_t size);
-    int ReceiveBytes(std::vector<uint8_t>& bytes);
-
-    struct sockaddr_in GetAddr() const;
-    int GetFd() const;
+    Handle GetHandle() const;
 };
