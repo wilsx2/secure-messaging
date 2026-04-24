@@ -8,6 +8,10 @@
 class TcpListener;
 class TcpClient : public TcpSocket
 {
+    private:
+    TcpClient(int handle);
+    friend TcpListener;
+
     public:
     TcpClient() = default;
 
@@ -19,6 +23,4 @@ class TcpClient : public TcpSocket
 
     std::expected<std::size_t, Error> Send(const void* data, std::size_t size);
     std::expected<std::size_t, Error> Receive(void* data, std::size_t size);
-
-    friend TcpListener;
 };

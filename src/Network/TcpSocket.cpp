@@ -13,7 +13,11 @@ TcpSocket::TcpSocket(TcpSocket&& socket)
     : _sockfd(socket._sockfd)
     , _address(socket._address)
     , _port(socket._port)
-{ }
+{
+    socket._sockfd = -1;
+    socket._address = IpAddress(0);
+    socket._port = 0;
+}
 
 TcpSocket::~TcpSocket()
 {
@@ -22,9 +26,12 @@ TcpSocket::~TcpSocket()
 
 void TcpSocket::Close()
 {
-    close(_sockfd);
-    _sockfd = -1;
-    _address = 0;
+    if (_sockfd != -1)
+    {
+        close(_sockfd);
+        _sockfd = -1;
+    }
+    _address = IpAddress(0);
     _port = 0;
 }
 

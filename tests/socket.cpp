@@ -10,8 +10,7 @@ int main()
 
     TcpClient client_to_server;
     assert(client_to_server.Connect(IpAddress::LocalHost(), PORT));
-
-    TcpClient server_to_client (std::move(listener.Accept().value()));
+    TcpClient server_to_client(listener.Accept().value());
 
     std::string sent_msg = "Peace and love on planet Earth.";
     std::size_t sent_len = sent_msg.length();

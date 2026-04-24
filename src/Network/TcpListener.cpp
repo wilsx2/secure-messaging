@@ -15,8 +15,13 @@ bool TcpListener::Listen(IpAddress remote_address, int port)
         _sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (_sockfd == -1)
         return false;
-    uint32_t addr_int = remote_address.ToInteger();
-    if (bind(_sockfd, (struct sockaddr*)&addr_int, sizeof(addr_int)) == -1)
+    int opt = 1;
+    setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    struct sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(remote_address.ToInteger());
+    if (bind(_sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1)
         return false;
     if (listen(_sockfd, 128) == -1)
         return false;
@@ -37,7 +42,6 @@ std::expected<TcpClient, TcpSocket::Error> TcpListener::Accept()
         else
             return std::unexpected(Error::Unexpected);
     }
-    TcpClient socket;
-    socket._sockfd = handle;
+    TcpClient socket (handle);
     return socket;
 }
