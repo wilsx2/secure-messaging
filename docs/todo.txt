@@ -5,7 +5,7 @@ Fundamental
     [ ] Test
 [ ] Pull cryptography out of SecureChannel
     [X] Crypto module
-    [ ] Test
+    [X] Test
     [ ] Reimplement behavior
     [ ] Do not send entire buffer if entire buffer is not used
 [ ] TcpMultiplexer (wrapper about epoll, consider epoll out)

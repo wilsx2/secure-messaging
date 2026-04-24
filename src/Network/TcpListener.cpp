@@ -29,14 +29,15 @@ std::expected<TcpClient, TcpSocket::Error> TcpListener::Accept()
 {
     TcpSocket::Handle handle = accept(_sockfd, nullptr, nullptr);
     if (handle == -1)
+    {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return std::unexpected(Error::NotReady);
         else if (errno == ENOTSOCK || errno == EINVAL)
             return std::unexpected(Error::Disconnected);
         else
             return std::unexpected(Error::Unexpected);
-
+    }
     TcpClient socket;
     socket._sockfd = handle;
-    return std::move(socket);
+    return socket;
 }

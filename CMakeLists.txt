@@ -11,4 +11,4 @@ add_subdirectory(src/)
 
 # Add Binary Targets
 add_subdirectory(tests)
-add_subdirectory(apps)
+# add_subdirectory(apps)

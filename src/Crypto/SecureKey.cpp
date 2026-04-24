@@ -14,49 +14,38 @@
 
 using namespace CryptoPP;
 
-SecureKey::SecureKey(SecByteBlock&& value) : _value(value) { }
+SecureKey::SecureKey(SecByteBlock&& value) : _value(std::move(value)) { }
 SecureKey::SecureKey(SecureKey&& key) : _value (std::move(key._value)) { }
 
-void SecureKey::Encrypt(void* dest, const void* src, std::size_t size, uint8_t iv[IV_LENGTH])
+void SecureKey::Encrypt(void* dest, const void* src, std::size_t blocks, uint8_t iv[BlockSize])
 {
+    std::size_t size = blocks * BlockSize;
+    AutoSeededRandomPool osrng;
+    osrng.GenerateBlock(iv, BlockSize);
+    
     AES::Encryption aesEncryption(_value.BytePtr(), _value.SizeInBytes());
 
-    // Generate IV
-    AutoSeededRandomPool osrng;
-    osrng.GenerateBlock(iv, IV_LENGTH);
-
-    // Encrypt
     CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
     StreamTransformationFilter stfEncryptor(
         cbcEncryption, 
-        new ArraySink(
-            reinterpret_cast<byte*>(dest), 
-            size
-        )
+        new ArraySink(reinterpret_cast<byte*>(dest), size),
+        BlockPaddingSchemeDef::NO_PADDING
     );
-    stfEncryptor.Put(
-        reinterpret_cast<const byte*>(src), 
-        size
-    );
+    stfEncryptor.Put(reinterpret_cast<const byte*>(src), size);
     stfEncryptor.MessageEnd();
 }
 
-void SecureKey::Decrypt(void* dest, const void* src, std::size_t size, uint8_t iv[IV_LENGTH])
+void SecureKey::Decrypt(void* dest, const void* src, std::size_t blocks, uint8_t iv[BlockSize])
 {
-    AES::Decryption aesDecryption (_value.BytePtr(), _value.SizeInBytes());
+    std::size_t size = blocks * BlockSize;
+    AES::Decryption aesDecryption(_value.BytePtr(), _value.SizeInBytes());
 
-    // Decrypt
     CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
     StreamTransformationFilter stfDecryptor(
-        cbcDecryption, 
-        new ArraySink(
-            reinterpret_cast<byte*>(dest),
-            size
-        )
+        cbcDecryption,
+        new ArraySink(reinterpret_cast<byte*>(dest), size),
+        BlockPaddingSchemeDef::NO_PADDING
     );
-    stfDecryptor.Put(
-        reinterpret_cast<const byte*>(src),
-        size
-    );
+    stfDecryptor.Put(reinterpret_cast<const byte*>(src), size);
     stfDecryptor.MessageEnd();
 }

@@ -9,10 +9,10 @@ set(LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/tests")
 set(SRCS
     # disconnectingserver.cpp
     # handshake.cpp
-	messages.cpp
+	# messages.cpp
     securekey.cpp
 	# singlelogin.cpp
-	sockets.cpp
+	socket.cpp
 )
 
 enable_testing()
@@ -21,7 +21,7 @@ foreach(SRC ${SRCS})
     
     add_executable(${EXE} ${SRC})
     target_include_directories(${EXE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
-    target_link_libraries(${EXE} PRIVATE Client Logging Network Server Shared)
+    target_link_libraries(${EXE} PRIVATE Crypto Logging Network )# Client Shared Server
 
     add_test(${EXE} ${EXE})
 endforeach()

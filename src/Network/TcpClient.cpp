@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Network/TcpClient.h"
 
 std::optional<IpAddress> TcpClient::GetRemoteAddress() const
@@ -40,25 +38,29 @@ bool TcpClient::Connect(IpAddress remote_address, int port)
 
 std::expected<std::size_t, TcpSocket::Error> TcpClient::Send(const void* data, std::size_t size)
 {
-    std::size_t sent = send(_sockfd, data, size, 0);
+    ssize_t sent = send(_sockfd, data, size, 0);
     if (sent == -1)
+    {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return std::unexpected(Error::NotReady);
         else if (errno == ENOTSOCK || errno == ENOTCONN || errno == EBADF)
             return std::unexpected(Error::Disconnected);
         else
             return std::unexpected(Error::Unexpected);
-    return sent;
+    }
+    return static_cast<std::size_t>(sent);
 }
 std::expected<std::size_t, TcpSocket::Error> TcpClient::Receive(void* data, std::size_t size)
 {
-    std::size_t received = recv(_sockfd, data, size, 0);
+    ssize_t received = recv(_sockfd, data, size, 0);
     if (received == -1)
+    {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return std::unexpected(Error::NotReady);
         else if (errno == ENOTSOCK || errno == ENOTCONN || errno == EBADF || errno == ECONNREFUSED)
             return std::unexpected(Error::Disconnected);
         else
             return std::unexpected(Error::Unexpected);
-    return received;
+    }
+    return static_cast<std::size_t>(received);
 }

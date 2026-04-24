@@ -1,17 +1,17 @@
 #pragma once
 #include <cryptopp/secblock.h>
-#include <cryptopp/rijndael.h>
+#include <cryptopp/aes.h>
 #include <array>
 
 class KeyAgreement;
 class SecureKey
 {
     public:
-    static constexpr std::size_t IV_LENGTH = CryptoPP::AES::BLOCKSIZE;
+    static constexpr std::size_t BlockSize = CryptoPP::AES::BLOCKSIZE;
     
     SecureKey(SecureKey&& key);
-    void Encrypt(void* dest, const void* src, std::size_t size, uint8_t iv[IV_LENGTH]);
-    void Decrypt(void* dest, const void* src, std::size_t size, uint8_t iv[IV_LENGTH]);
+    void Encrypt(void* dest, const void* src, std::size_t blocks, uint8_t iv[BlockSize]);
+    void Decrypt(void* dest, const void* src, std::size_t blocks, uint8_t iv[BlockSize]);
 
     private:
     CryptoPP::SecByteBlock _value;
