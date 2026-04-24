@@ -17,35 +17,43 @@ using namespace CryptoPP;
 SecureKey::SecureKey(SecByteBlock&& value) : _value(std::move(value)) { }
 SecureKey::SecureKey(SecureKey&& key) : _value (std::move(key._value)) { }
 
-void SecureKey::Encrypt(void* dest, const void* src, std::size_t blocks, uint8_t iv[BlockSize])
+std::size_t SecureKey::Encrypt(void* dest, const void* src, std::size_t dest_blocks, std::size_t src_blocks, uint8_t iv[BlockSize])
 {
-    std::size_t size = blocks * BlockSize;
+    std::size_t src_size = src_blocks * BlockSize;
+    std::size_t dest_size = dest_blocks * BlockSize;
     AutoSeededRandomPool osrng;
     osrng.GenerateBlock(iv, BlockSize);
     
     AES::Encryption aesEncryption(_value.BytePtr(), _value.SizeInBytes());
 
     CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
+    ArraySink sink = ArraySink(reinterpret_cast<byte*>(dest), dest_size);
     StreamTransformationFilter stfEncryptor(
         cbcEncryption, 
-        new ArraySink(reinterpret_cast<byte*>(dest), size),
-        BlockPaddingSchemeDef::NO_PADDING
+        new Redirector(sink),
+        BlockPaddingSchemeDef::DEFAULT_PADDING
     );
-    stfEncryptor.Put(reinterpret_cast<const byte*>(src), size);
+    stfEncryptor.Put(reinterpret_cast<const byte*>(src), src_size);
     stfEncryptor.MessageEnd();
+
+    return sink.TotalPutLength();
 }
 
-void SecureKey::Decrypt(void* dest, const void* src, std::size_t blocks, uint8_t iv[BlockSize])
+std::size_t SecureKey::Decrypt(void* dest, const void* src, std::size_t dest_blocks, std::size_t src_blocks, uint8_t iv[BlockSize])
 {
-    std::size_t size = blocks * BlockSize;
+    std::size_t src_size = src_blocks * BlockSize;
+    std::size_t dest_size = dest_blocks * BlockSize;
     AES::Decryption aesDecryption(_value.BytePtr(), _value.SizeInBytes());
 
     CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv);
+    ArraySink sink = ArraySink(reinterpret_cast<byte*>(dest), dest_size);
     StreamTransformationFilter stfDecryptor(
         cbcDecryption,
-        new ArraySink(reinterpret_cast<byte*>(dest), size),
-        BlockPaddingSchemeDef::NO_PADDING
+        new Redirector(sink),
+        BlockPaddingSchemeDef::DEFAULT_PADDING
     );
-    stfDecryptor.Put(reinterpret_cast<const byte*>(src), size);
+    stfDecryptor.Put(reinterpret_cast<const byte*>(src), src_size);
     stfDecryptor.MessageEnd();
+
+    return sink.TotalPutLength();
 }

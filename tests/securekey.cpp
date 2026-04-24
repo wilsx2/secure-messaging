@@ -46,16 +46,15 @@ int main()
     SecureKey key_b(std::move(*result_b));
 
     uint8_t iv[SecureKey::BlockSize];
-    std::size_t buf_size = 1 * SecureKey::BlockSize;
-    char* plaintext_a = new char[buf_size];
-    char* encrypted   = new char[buf_size];
-    char* plaintext_b = new char[buf_size];
+    char* plaintext_a = new char[SecureKey::BlockSize];
+    char* encrypted   = new char[SecureKey::BlockSize * 2];
+    char* plaintext_b = new char[SecureKey::BlockSize];
 
     strcpy(plaintext_a, "Hello world!");
-    key_a.Encrypt(encrypted, plaintext_a, 1, iv);
-    assert(memcmp(encrypted, plaintext_a, buf_size) != 0);
-    key_b.Decrypt(plaintext_b, encrypted, 1, iv);
-    assert(memcmp(plaintext_a, plaintext_b, buf_size) == 0);
+    key_a.Encrypt(encrypted, plaintext_a, 2, 1, iv);
+    assert(memcmp(encrypted, plaintext_a, SecureKey::BlockSize) != 0);
+    key_b.Decrypt(plaintext_b, encrypted, 1, 2, iv);
+    assert(memcmp(plaintext_a, plaintext_b, SecureKey::BlockSize) == 0);
 
     delete[] plaintext_a;
     delete[] encrypted;

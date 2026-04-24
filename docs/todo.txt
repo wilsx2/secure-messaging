@@ -1,8 +1,8 @@
 Fundamental
-[ ] TcpSocket cleanup
+[X] TcpSocket cleanup
     [X] Address class
     [X] Separate listening and connecting sockets
-    [ ] Test
+    [X] Test
 [ ] Pull cryptography out of SecureChannel
     [X] Crypto module
     [X] Test

@@ -11,7 +11,6 @@
 
 class TcpSocket
 {
-    public:
     protected:
     int _sockfd;
     IpAddress _address;
